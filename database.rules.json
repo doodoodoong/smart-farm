@@ -1,0 +1,42 @@
+{
+  "rules": {
+    "users": {
+      "$uid": {
+        ".read": "$uid === auth.uid",
+        ".write": "$uid === auth.uid",
+        "plants": {
+          "$plantId": {
+            ".validate": "newData.hasChildren(['plantName', 'temperature', 'humidity', 'createdAt', 'lastModified'])",
+            "plantName": { ".validate": "newData.isString()" },
+            "temperature": { ".validate": "newData.isString()" },
+            "humidity": { ".validate": "newData.isString()" },
+            "createdAt": { ".validate": "newData.isString()" },
+            "lastModified": { ".validate": "newData.isString()" },
+            "plantId": { ".validate": "newData.isString()" }
+          }
+        },
+        "diaries": {
+          ".read": "$uid === auth.uid",
+          ".write": "$uid === auth.uid",
+          "$plantId": {
+            ".read": "$uid === auth.uid",
+            ".write": "$uid === auth.uid",
+            "$diaryId": {
+              ".validate": "newData.hasChildren(['plantId', 'plantName', 'leafCount', 'plantHeight', 'waterAmount', 'plantColor', 'additionalNotes', 'createdAt', 'lastModified'])",
+              "diaryId": { ".validate": "newData.isString()" },
+              "plantId": { ".validate": "newData.isString()" },
+              "plantName": { ".validate": "newData.isString()" },
+              "leafCount": { ".validate": "newData.isString()" },
+              "plantHeight": { ".validate": "newData.isString()" },
+              "waterAmount": { ".validate": "newData.isString()" },
+              "plantColor": { ".validate": "newData.isString()" },
+              "additionalNotes": { ".validate": "newData.isString()" },
+              "createdAt": { ".validate": "newData.isString()" },
+              "lastModified": { ".validate": "newData.isString()" }
+            }
+          }
+        }
+      }
+    }
+  }
+}
