@@ -11,16 +11,26 @@ import {
   AuthError,
 } from "firebase/auth";
 import { useRouter } from "next/navigation";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [showSignupAlert, setShowSignupAlert] = useState(false);
   const router = useRouter();
 
   const handleSignupClick = (e: React.MouseEvent) => {
     e.preventDefault();
-    alert("회원가입 기능은 현재 준비중입니다.");
+    setShowSignupAlert(true);
   };
 
   const handleEmailLogin = async (e: React.FormEvent) => {
@@ -68,6 +78,20 @@ export default function LoginPage() {
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 flex flex-col items-center justify-center p-8">
+      <AlertDialog open={showSignupAlert} onOpenChange={setShowSignupAlert}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>준비중</AlertDialogTitle>
+            <AlertDialogDescription>
+              회원가입 기능은 현재 준비중입니다. 조금만 기다려주세요!
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction>확인</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <div className="absolute top-4 left-4">
         <Link href="/">
           <Button variant="ghost" className="text-gray-300">
