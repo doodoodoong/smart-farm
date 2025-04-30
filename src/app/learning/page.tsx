@@ -82,7 +82,7 @@ function PlantConditionsDialog({
   });
 
   React.useEffect(() => {
-    if (!category || !auth.currentUser) return;
+    if (!category) return;
 
     const answersRef = ref(database, `answers/${category}`);
     const unsubscribe = onValue(
@@ -96,6 +96,7 @@ function PlantConditionsDialog({
           }));
           answersArray.sort((a, b) => b.timestamp - a.timestamp);
           setAnswers(answersArray);
+          setError(null);
         } else {
           setAnswers([]);
         }
@@ -109,7 +110,7 @@ function PlantConditionsDialog({
     );
 
     return () => unsubscribe();
-  }, [category]);
+  }, [category, auth.currentUser]);
 
   const handleSubmit = async () => {
     if (!answer.trim() || !category) return;
@@ -121,13 +122,13 @@ function PlantConditionsDialog({
     setIsLoading(true);
     setError(null);
 
-    const newAnswer: Answer = {
-      email: userEmail,
-      answer: answer.trim(),
-      timestamp: Date.now(),
-    };
-
     try {
+      const newAnswer: Answer = {
+        email: userEmail,
+        answer: answer.trim(),
+        timestamp: Date.now(),
+      };
+
       if (editingAnswer?.id) {
         const answerRef = ref(
           database,
@@ -145,15 +146,20 @@ function PlantConditionsDialog({
       setOpen(false);
     } catch (error) {
       console.error("Error saving answer:", error);
-      setError("답변 제출에 실패했습니다. 다시 시도해주세요.");
+      setError("답변 저장에 실패했습니다. 다시 시도해주세요.");
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleEdit = (ans: Answer) => {
+    if (ans.email !== userEmail) {
+      setError("자신의 답변만 수정할 수 있습니다.");
+      return;
+    }
     setEditingAnswer(ans);
     setAnswer(ans.answer);
+    setOpen(true);
   };
 
   const handleCancelEdit = () => {
@@ -162,6 +168,10 @@ function PlantConditionsDialog({
   };
 
   const handleDeleteClick = (ans: Answer) => {
+    if (ans.email !== userEmail) {
+      setError("자신의 답변만 삭제할 수 있습니다.");
+      return;
+    }
     setDeleteAlert({
       isOpen: true,
       answer: ans,
@@ -209,7 +219,7 @@ function PlantConditionsDialog({
               <Button
                 onClick={handleSubmit}
                 className="flex-1"
-                disabled={isLoading}
+                disabled={isLoading || !auth.currentUser}
               >
                 {isLoading
                   ? "제출 중..."
@@ -229,33 +239,17 @@ function PlantConditionsDialog({
             </div>
           </div>
           {error && <p className="text-sm text-red-500">{error}</p>}
+          {!auth.currentUser && (
+            <p className="text-sm text-yellow-500">
+              답변을 작성하려면 로그인이 필요합니다.
+            </p>
+          )}
         </div>
 
         <div className="space-y-4">
-          <h3 className="font-medium">다른 학생들의 답변</h3>
-          {answers.length > 0 ? (
-            answers
-              .filter((ans) => ans.email !== userEmail)
-              .map((ans, index) => (
-                <div
-                  key={index}
-                  className="p-4 bg-gray-50 rounded-lg space-y-2"
-                >
-                  <p className="text-sm text-gray-600">{ans.answer}</p>
-                  <p className="text-xs text-gray-400">
-                    {new Date(ans.timestamp).toLocaleString()}
-                  </p>
-                </div>
-              ))
-          ) : (
-            <p className="text-sm text-gray-500">
-              아직 다른 학생들의 답변이 없습니다.
-            </p>
-          )}
-
           {answers.some((ans) => ans.email === userEmail) && (
-            <div className="mt-6">
-              <h3 className="font-medium mb-3">내가 작성한 답변</h3>
+            <div className="space-y-4">
+              <h3 className="font-medium">내가 작성한 답변</h3>
               {answers
                 .filter((ans) => ans.email === userEmail)
                 .map((ans, index) => (
@@ -291,6 +285,29 @@ function PlantConditionsDialog({
                 ))}
             </div>
           )}
+
+          <div className="space-y-4">
+            <h3 className="font-medium">다른 학생들의 답변</h3>
+            {answers.filter((ans) => ans.email !== userEmail).length > 0 ? (
+              answers
+                .filter((ans) => ans.email !== userEmail)
+                .map((ans, index) => (
+                  <div
+                    key={index}
+                    className="p-4 bg-gray-50 rounded-lg space-y-2"
+                  >
+                    <p className="text-sm text-gray-600">{ans.answer}</p>
+                    <p className="text-xs text-gray-400">
+                      {new Date(ans.timestamp).toLocaleString()}
+                    </p>
+                  </div>
+                ))
+            ) : (
+              <p className="text-sm text-gray-500">
+                아직 다른 학생들의 답변이 없습니다.
+              </p>
+            )}
+          </div>
         </div>
       </div>
 
@@ -374,6 +391,8 @@ export default function LearningPage() {
     const unsubscribe = auth.onAuthStateChanged((user: User | null) => {
       if (user?.email) {
         setUserEmail(user.email);
+      } else {
+        setUserEmail("");
       }
     });
 

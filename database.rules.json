@@ -37,6 +37,22 @@
           }
         }
       }
+    },
+    "answers": {
+      "$category": {
+        ".read": "auth != null",
+        ".write": "auth != null",
+        "$answerId": {
+          ".validate": "newData.hasChildren(['email', 'answer', 'timestamp'])",
+          "email": {
+            ".validate": "newData.isString() && newData.val() === auth.token.email"
+          },
+          "answer": {
+            ".validate": "newData.isString() && newData.val().length > 0"
+          },
+          "timestamp": { ".validate": "newData.isNumber()" }
+        }
+      }
     }
   }
 }
