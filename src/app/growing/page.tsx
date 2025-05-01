@@ -51,6 +51,7 @@ interface PlantInfo {
   humidity: string;
   createdAt: string;
   lastModified: string;
+  email: string;
 }
 
 interface DiaryEntry {
@@ -64,6 +65,7 @@ interface DiaryEntry {
   additionalNotes: string;
   createdAt: string;
   lastModified: string;
+  email: string;
 }
 
 export default function GrowingPage() {
@@ -77,6 +79,7 @@ export default function GrowingPage() {
     humidity: "",
     createdAt: "",
     lastModified: "",
+    email: "",
   });
   const [diaryEntry, setDiaryEntry] = useState<
     Omit<DiaryEntry, "diaryId" | "createdAt" | "lastModified">
@@ -88,6 +91,7 @@ export default function GrowingPage() {
     waterAmount: "",
     plantColor: "",
     additionalNotes: "",
+    email: "",
   });
   const [diaryRecords, setDiaryRecords] = useState<DiaryEntry[]>([]);
   const [savedPlant, setSavedPlant] = useState<PlantInfo | null>(null);
@@ -176,6 +180,7 @@ export default function GrowingPage() {
         humidity: plantInfo.humidity,
         lastModified: new Date().toISOString(),
         createdAt: savedPlant?.createdAt || new Date().toISOString(),
+        email: user.email || "",
       };
 
       await set(plantRef, updatedPlantInfo);
@@ -224,6 +229,7 @@ export default function GrowingPage() {
         additionalNotes: diaryEntry.additionalNotes,
         createdAt: new Date().toISOString(),
         lastModified: new Date().toISOString(),
+        email: user.email || "",
       };
 
       await set(diaryRef, newDiaryEntry);
@@ -302,6 +308,7 @@ export default function GrowingPage() {
         humidity: "",
         createdAt: "",
         lastModified: "",
+        email: "",
       });
       setErrors({
         temperature: "",
@@ -566,261 +573,271 @@ export default function GrowingPage() {
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800">
-      <div className="max-w-7xl mx-auto p-6 h-screen flex flex-col">
-        <div className="flex items-center mb-6">
-          <Button
-            variant="ghost"
-            onClick={() => router.back()}
-            className="text-white hover:bg-white hover:text-black"
-          >
-            <ArrowLeft className="h-5 w-5 mr-2" />
-            돌아가기
-          </Button>
-        </div>
+    <ScrollArea className="h-screen">
+      <div className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800">
+        <div className="max-w-7xl mx-auto p-6 h-screen flex flex-col">
+          <div className="flex items-center mb-6">
+            <Button
+              variant="ghost"
+              onClick={() => router.back()}
+              className="text-white hover:bg-white hover:text-black"
+            >
+              <ArrowLeft className="h-5 w-5 mr-2" />
+              돌아가기
+            </Button>
+          </div>
 
-        <h1 className="text-2xl font-bold text-white mb-8">식물 키우기</h1>
+          <h1 className="text-2xl font-bold text-white mb-8">식물 키우기</h1>
 
-        <div className="flex-1 -mx-6">
-          <ResizablePanelGroup
-            direction="horizontal"
-            className="min-h-[calc(100vh-200px)] rounded-lg border border-gray-700"
-          >
-            <ResizablePanel defaultSize={30} minSize={20}>
-              <div className="h-full p-6">
-                <div className="h-full rounded-lg border border-gray-700 bg-gray-800/50 flex flex-col">
-                  <div className="p-4 border-b border-gray-700">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center">
-                        <Video className="h-5 w-5 mr-2" />
-                        <h2 className="text-lg font-semibold text-white">
-                          실시간 영상
-                        </h2>
-                      </div>
-                      <div className="flex flex-col space-y-2">
+          <div className="flex-1 -mx-6">
+            <ResizablePanelGroup
+              direction="horizontal"
+              className="min-h-[calc(100vh-200px)] rounded-lg border border-gray-700"
+            >
+              <ResizablePanel defaultSize={30} minSize={20}>
+                <div className="h-full p-6">
+                  <div className="h-full rounded-lg border border-gray-700 bg-gray-800/50 flex flex-col">
+                    <div className="p-4 border-b border-gray-700">
+                      <div className="flex items-center justify-between">
                         <div className="flex items-center">
-                          <span className="text-sm text-gray-400 mr-2">
-                            온도
-                          </span>
-                          <span className="text-white font-medium">25°C</span>
+                          <Video className="h-5 w-5 mr-2" />
+                          <h2 className="text-lg font-semibold text-white">
+                            실시간 영상
+                          </h2>
                         </div>
-                        <div className="flex items-center">
-                          <span className="text-sm text-gray-400 mr-2">
-                            습도
-                          </span>
-                          <span className="text-white font-medium">60%</span>
-                        </div>
-                        <div className="flex items-center">
-                          <span className="text-sm text-gray-400 mr-2">
-                            토양수분
-                          </span>
-                          <span className="text-white font-medium">45%</span>
+                        <div className="flex flex-col space-y-2">
+                          <div className="flex items-center">
+                            <span className="text-sm text-gray-400 mr-2">
+                              온도
+                            </span>
+                            <span className="text-white font-medium">25°C</span>
+                          </div>
+                          <div className="flex items-center">
+                            <span className="text-sm text-gray-400 mr-2">
+                              습도
+                            </span>
+                            <span className="text-white font-medium">60%</span>
+                          </div>
+                          <div className="flex items-center">
+                            <span className="text-sm text-gray-400 mr-2">
+                              토양수분
+                            </span>
+                            <span className="text-white font-medium">45%</span>
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                  <div className="flex-1 flex items-center justify-center p-4">
-                    <div className="text-center text-gray-400">
-                      <p className="mb-2">스트리밍 영상이 여기에 표시됩니다</p>
-                      <p className="text-sm">16:9 비율로 표시될 예정</p>
+                    <div className="flex-1 flex items-center justify-center p-4">
+                      <div className="text-center text-gray-400">
+                        <p className="mb-2">
+                          스트리밍 영상이 여기에 표시됩니다
+                        </p>
+                        <p className="text-sm">16:9 비율로 표시될 예정</p>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            </ResizablePanel>
-            <ResizableHandle withHandle />
-            <ResizablePanel defaultSize={35} minSize={30}>
-              <div className="h-full p-6">
-                <div className="h-full rounded-lg border border-gray-700 bg-gray-800/50">
-                  {currentStep === "info" ? (
-                    <div className="p-6">{renderInfoStep()}</div>
-                  ) : (
-                    <div className="p-6 h-full">
-                      <div className="flex justify-between items-center mb-4">
-                        <h2 className="text-lg font-semibold text-white">
-                          재배일지 작성
-                        </h2>
-                        <Button
-                          variant="ghost"
-                          onClick={() => setCurrentStep("info")}
-                          className="text-white hover:bg-white hover:text-black"
-                        >
-                          <ArrowLeft className="h-4 w-4 mr-2" />
-                          이전 단계로
-                        </Button>
-                      </div>
-
-                      <div className="space-y-4">
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className="space-y-2">
-                            <Label htmlFor="leafCount" className="text-white">
-                              잎의 개수는 몇개인가요?
-                            </Label>
-                            <Input
-                              id="leafCount"
-                              name="leafCount"
-                              value={diaryEntry.leafCount}
-                              onChange={handleDiaryChange}
-                              className="bg-gray-700 text-white border-gray-600"
-                              placeholder="예: 5개"
-                            />
-                          </div>
-
-                          <div className="space-y-2">
-                            <Label htmlFor="plantHeight" className="text-white">
-                              식물의 길이는 얼마인가요?
-                            </Label>
-                            <Input
-                              id="plantHeight"
-                              name="plantHeight"
-                              value={diaryEntry.plantHeight}
-                              onChange={handleDiaryChange}
-                              className="bg-gray-700 text-white border-gray-600"
-                              placeholder="예: 10cm"
-                            />
-                          </div>
+              </ResizablePanel>
+              <ResizableHandle withHandle />
+              <ResizablePanel defaultSize={35} minSize={30}>
+                <div className="h-full p-6">
+                  <div className="h-full rounded-lg border border-gray-700 bg-gray-800/50">
+                    {currentStep === "info" ? (
+                      <div className="p-6">{renderInfoStep()}</div>
+                    ) : (
+                      <div className="p-6 h-full">
+                        <div className="flex justify-between items-center mb-4">
+                          <h2 className="text-lg font-semibold text-white">
+                            재배일지 작성
+                          </h2>
+                          <Button
+                            variant="ghost"
+                            onClick={() => setCurrentStep("info")}
+                            className="text-white hover:bg-white hover:text-black"
+                          >
+                            <ArrowLeft className="h-4 w-4 mr-2" />
+                            이전 단계로
+                          </Button>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-4">
+                          <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                              <Label htmlFor="leafCount" className="text-white">
+                                잎의 개수는 몇개인가요?
+                              </Label>
+                              <Input
+                                id="leafCount"
+                                name="leafCount"
+                                value={diaryEntry.leafCount}
+                                onChange={handleDiaryChange}
+                                className="bg-gray-700 text-white border-gray-600"
+                                placeholder="예: 5개"
+                              />
+                            </div>
+
+                            <div className="space-y-2">
+                              <Label
+                                htmlFor="plantHeight"
+                                className="text-white"
+                              >
+                                식물의 길이는 얼마인가요?
+                              </Label>
+                              <Input
+                                id="plantHeight"
+                                name="plantHeight"
+                                value={diaryEntry.plantHeight}
+                                onChange={handleDiaryChange}
+                                className="bg-gray-700 text-white border-gray-600"
+                                placeholder="예: 10cm"
+                              />
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                              <Label
+                                htmlFor="waterAmount"
+                                className="text-white flex items-center gap-2"
+                              >
+                                물은 얼마나 공급되었나요?
+                                <TooltipProvider>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <Badge
+                                        variant="outline"
+                                        className="text-xs cursor-help text-white border-white/40 hover:bg-white/10"
+                                      >
+                                        <HelpCircle className="h-3 w-3 mr-1" />
+                                        도움말
+                                      </Badge>
+                                    </TooltipTrigger>
+                                    <TooltipContent className="bg-gray-800 text-white border-gray-700">
+                                      <p>
+                                        비커의 눈금을 정확하게 측정하여
+                                        작성해주세요
+                                      </p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
+                              </Label>
+                              <Input
+                                id="waterAmount"
+                                name="waterAmount"
+                                value={diaryEntry.waterAmount}
+                                onChange={handleDiaryChange}
+                                className="bg-gray-700 text-white border-gray-600"
+                                placeholder="예: 100ml"
+                              />
+                            </div>
+
+                            <div className="space-y-2">
+                              <Label
+                                htmlFor="plantColor"
+                                className="text-white"
+                              >
+                                식물의 색깔은 어떠한가요?
+                              </Label>
+                              <Input
+                                id="plantColor"
+                                name="plantColor"
+                                value={diaryEntry.plantColor}
+                                onChange={handleDiaryChange}
+                                className="bg-gray-700 text-white border-gray-600"
+                                placeholder="예: 진한 초록색"
+                              />
+                            </div>
+                          </div>
+
                           <div className="space-y-2">
                             <Label
-                              htmlFor="waterAmount"
-                              className="text-white flex items-center gap-2"
+                              htmlFor="additionalNotes"
+                              className="text-white"
                             >
-                              물은 얼마나 공급되었나요?
-                              <TooltipProvider>
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <Badge
-                                      variant="outline"
-                                      className="text-xs cursor-help text-white border-white/40 hover:bg-white/10"
-                                    >
-                                      <HelpCircle className="h-3 w-3 mr-1" />
-                                      도움말
-                                    </Badge>
-                                  </TooltipTrigger>
-                                  <TooltipContent className="bg-gray-800 text-white border-gray-700">
-                                    <p>
-                                      비커의 눈금을 정확하게 측정하여
-                                      작성해주세요
-                                    </p>
-                                  </TooltipContent>
-                                </Tooltip>
-                              </TooltipProvider>
+                              그 외 관찰내용을 작성해주세요
                             </Label>
-                            <Input
-                              id="waterAmount"
-                              name="waterAmount"
-                              value={diaryEntry.waterAmount}
+                            <Textarea
+                              id="additionalNotes"
+                              name="additionalNotes"
+                              value={diaryEntry.additionalNotes}
                               onChange={handleDiaryChange}
-                              className="bg-gray-700 text-white border-gray-600"
-                              placeholder="예: 100ml"
+                              className="min-h-[100px] bg-gray-700 text-white border-gray-600"
+                              placeholder="예: 잎이 시들어 보이지만 새로운 잎이 나오기 시작했다..."
                             />
                           </div>
 
-                          <div className="space-y-2">
-                            <Label htmlFor="plantColor" className="text-white">
-                              식물의 색깔은 어떠한가요?
-                            </Label>
-                            <Input
-                              id="plantColor"
-                              name="plantColor"
-                              value={diaryEntry.plantColor}
-                              onChange={handleDiaryChange}
-                              className="bg-gray-700 text-white border-gray-600"
-                              placeholder="예: 진한 초록색"
-                            />
-                          </div>
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label
-                            htmlFor="additionalNotes"
-                            className="text-white"
+                          <Button
+                            onClick={handleSaveDiary}
+                            className="w-full bg-green-600 hover:bg-green-700 text-white"
                           >
-                            그 외 관찰내용을 작성해주세요
-                          </Label>
-                          <Textarea
-                            id="additionalNotes"
-                            name="additionalNotes"
-                            value={diaryEntry.additionalNotes}
-                            onChange={handleDiaryChange}
-                            className="min-h-[100px] bg-gray-700 text-white border-gray-600"
-                            placeholder="예: 잎이 시들어 보이지만 새로운 잎이 나오기 시작했다..."
-                          />
+                            <Save className="h-4 w-4 mr-2" />
+                            재배일지 저장
+                          </Button>
                         </div>
-
-                        <Button
-                          onClick={handleSaveDiary}
-                          className="w-full bg-green-600 hover:bg-green-700 text-white"
-                        >
-                          <Save className="h-4 w-4 mr-2" />
-                          재배일지 저장
-                        </Button>
                       </div>
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </div>
-              </div>
-            </ResizablePanel>
-            <ResizableHandle withHandle />
-            <ResizablePanel defaultSize={35} minSize={30}>
-              <div className="h-full p-6">
-                <div className="h-full rounded-lg border border-gray-700 bg-gray-800/50">
-                  <div className="p-6 h-full">
-                    <div className="space-y-4 h-full flex flex-col">
-                      <div className="flex justify-between items-center">
-                        <h2 className="text-lg font-semibold text-white">
-                          재배일지 기록
-                        </h2>
-                      </div>
-
-                      <ScrollArea className="flex-grow h-[calc(100vh-280px)]">
-                        <div className="space-y-4 pr-4">
-                          {diaryRecords.length === 0 ? (
-                            <p className="text-gray-400 text-center py-8">
-                              아직 작성된 재배일지가 없습니다.
-                            </p>
-                          ) : (
-                            diaryRecords.map((record) => (
-                              <div
-                                key={`${record.plantId}-${record.createdAt}`}
-                                className="p-4 rounded-lg bg-gray-700/50 border border-gray-600 space-y-2"
-                              >
-                                <div className="flex justify-between items-start">
-                                  <h3 className="text-white font-medium">
-                                    {record.plantName}
-                                  </h3>
-                                  <span className="text-xs text-gray-400">
-                                    {new Date(
-                                      record.createdAt
-                                    ).toLocaleString()}
-                                  </span>
-                                </div>
-                                <div className="grid grid-cols-2 gap-2 text-sm text-gray-300">
-                                  <p>잎 개수: {record.leafCount}</p>
-                                  <p>길이: {record.plantHeight}</p>
-                                  <p>물 공급량: {record.waterAmount}</p>
-                                  <p>색깔: {record.plantColor}</p>
-                                </div>
-                                {record.additionalNotes && (
-                                  <p className="text-sm text-gray-400 mt-2 border-t border-gray-600 pt-2">
-                                    {record.additionalNotes}
-                                  </p>
-                                )}
-                              </div>
-                            ))
-                          )}
+              </ResizablePanel>
+              <ResizableHandle withHandle />
+              <ResizablePanel defaultSize={35} minSize={30}>
+                <div className="h-full p-6">
+                  <div className="h-full rounded-lg border border-gray-700 bg-gray-800/50">
+                    <div className="p-6 h-full">
+                      <div className="space-y-4 h-full flex flex-col">
+                        <div className="flex justify-between items-center">
+                          <h2 className="text-lg font-semibold text-white">
+                            재배일지 기록
+                          </h2>
                         </div>
-                      </ScrollArea>
+
+                        <ScrollArea className="flex-grow h-[calc(100vh-280px)]">
+                          <div className="space-y-4 pr-4">
+                            {diaryRecords.length === 0 ? (
+                              <p className="text-gray-400 text-center py-8">
+                                아직 작성된 재배일지가 없습니다.
+                              </p>
+                            ) : (
+                              diaryRecords.map((record) => (
+                                <div
+                                  key={`${record.plantId}-${record.createdAt}`}
+                                  className="p-4 rounded-lg bg-gray-700/50 border border-gray-600 space-y-2"
+                                >
+                                  <div className="flex justify-between items-start">
+                                    <h3 className="text-white font-medium">
+                                      {record.plantName}
+                                    </h3>
+                                    <span className="text-xs text-gray-400">
+                                      {new Date(
+                                        record.createdAt
+                                      ).toLocaleString()}
+                                    </span>
+                                  </div>
+                                  <div className="grid grid-cols-2 gap-2 text-sm text-gray-300">
+                                    <p>잎 개수: {record.leafCount}</p>
+                                    <p>길이: {record.plantHeight}</p>
+                                    <p>물 공급량: {record.waterAmount}</p>
+                                    <p>색깔: {record.plantColor}</p>
+                                  </div>
+                                  {record.additionalNotes && (
+                                    <p className="text-sm text-gray-400 mt-2 border-t border-gray-600 pt-2">
+                                      {record.additionalNotes}
+                                    </p>
+                                  )}
+                                </div>
+                              ))
+                            )}
+                          </div>
+                        </ScrollArea>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            </ResizablePanel>
-          </ResizablePanelGroup>
+              </ResizablePanel>
+            </ResizablePanelGroup>
+          </div>
         </div>
       </div>
-    </div>
+    </ScrollArea>
   );
 }

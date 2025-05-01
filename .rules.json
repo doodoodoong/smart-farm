@@ -1,0 +1,77 @@
+{
+  "rules": {
+    "users": {
+      // 선생님은 모든 사용자 데이터를 읽을 수 있음
+      ".read": "auth != null",
+      ".indexOn": ["role"],
+
+      "$uid": {
+        // 자신의 데이터는 읽고 쓸 수 있음
+        ".read": "auth != null",
+        ".write": "auth != null && $uid === auth.uid",
+
+        // 사용자 기본 정보
+        "email": { ".validate": "newData.isString()" },
+        "role": {
+          ".validate": "newData.isString() && (newData.val() === 'student' || newData.val() === 'teacher')"
+        },
+
+        "plants": {
+          ".read": "auth != null",
+          "$plantId": {
+            ".validate": "newData.hasChildren(['plantName', 'temperature', 'humidity', 'createdAt', 'lastModified'])",
+            "plantName": { ".validate": "newData.isString()" },
+            "temperature": { ".validate": "newData.isString()" },
+            "humidity": { ".validate": "newData.isString()" },
+            "createdAt": { ".validate": "newData.isString()" },
+            "lastModified": { ".validate": "newData.isString()" },
+            "plantId": { ".validate": "newData.isString()" }
+          }
+        },
+
+        "diaries": {
+          ".read": "auth != null",
+          ".write": "auth != null && $uid === auth.uid",
+
+          "$plantId": {
+            ".read": "auth != null",
+            ".write": "auth != null && $uid === auth.uid",
+
+            "$diaryId": {
+              ".validate": "newData.hasChildren(['plantId', 'plantName', 'leafCount', 'plantHeight', 'waterAmount', 'plantColor', 'additionalNotes', 'createdAt', 'lastModified'])",
+              "diaryId": { ".validate": "newData.isString()" },
+              "plantId": { ".validate": "newData.isString()" },
+              "plantName": { ".validate": "newData.isString()" },
+              "leafCount": { ".validate": "newData.isString()" },
+              "plantHeight": { ".validate": "newData.isString()" },
+              "waterAmount": { ".validate": "newData.isString()" },
+              "plantColor": { ".validate": "newData.isString()" },
+              "additionalNotes": { ".validate": "newData.isString()" },
+              "createdAt": { ".validate": "newData.isString()" },
+              "lastModified": { ".validate": "newData.isString()" }
+            }
+          }
+        }
+      }
+    },
+
+    "answers": {
+      ".read": "auth != null",
+      ".write": "auth != null",
+      "$category": {
+        ".read": "auth != null",
+        ".write": "auth != null",
+        "$answerId": {
+          ".validate": "newData.hasChildren(['email', 'answer', 'timestamp'])",
+          "email": {
+            ".validate": "newData.isString() && newData.val() === auth.token.email"
+          },
+          "answer": {
+            ".validate": "newData.isString() && newData.val().length > 0"
+          },
+          "timestamp": { ".validate": "newData.isNumber()" }
+        }
+      }
+    }
+  }
+}

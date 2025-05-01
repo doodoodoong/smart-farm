@@ -24,7 +24,7 @@ interface PlantDiary {
   additionalNotes: string;
   createdAt: string;
   plantName: string;
-  userEmail: string;
+  email: string;
   diaryId: string;
   plantId: string;
   lastModified: string;
@@ -37,7 +37,7 @@ interface Plant {
   createdAt: string;
   lastModified: string;
   plantId: string;
-  userEmail: string;
+  email: string;
 }
 
 interface StudentData {
@@ -50,6 +50,18 @@ interface StudentData {
     [plantId: string]: {
       [diaryId: string]: PlantDiary;
     };
+  };
+}
+
+interface Answer {
+  answer: string;
+  email: string;
+  timestamp: number;
+}
+
+interface AnswerData {
+  [questionType: string]: {
+    [answerId: string]: Answer;
   };
 }
 
@@ -78,6 +90,7 @@ interface CustomTooltipPayload {
 
 export default function TeacherDashboard() {
   const [userData, setUserData] = useState<UserData>({});
+  const [answerData, setAnswerData] = useState<AnswerData>({});
   const [studentCount, setStudentCount] = useState(0);
   const [plantCount, setPlantCount] = useState(0);
   const [todayRecords, setTodayRecords] = useState(0);
@@ -86,8 +99,9 @@ export default function TeacherDashboard() {
 
   useEffect(() => {
     const usersRef = ref(database, "users");
+    const answersRef = ref(database, "answers");
 
-    const unsubscribe = onValue(
+    const unsubscribeUsers = onValue(
       usersRef,
       (snapshot) => {
         try {
@@ -169,7 +183,27 @@ export default function TeacherDashboard() {
       }
     );
 
-    return () => unsubscribe();
+    const unsubscribeAnswers = onValue(
+      answersRef,
+      (snapshot) => {
+        try {
+          const data = snapshot.val();
+          if (data) {
+            setAnswerData(data);
+          }
+        } catch (err) {
+          console.error("Error processing answers:", err);
+        }
+      },
+      (error) => {
+        console.error("Firebase answers error:", error);
+      }
+    );
+
+    return () => {
+      unsubscribeUsers();
+      unsubscribeAnswers();
+    };
   }, []);
 
   const getStudentGrowthData = (studentData: StudentData): DiaryEntry[] => {
@@ -241,7 +275,7 @@ export default function TeacherDashboard() {
 
         <div className="bg-gray-800/50 rounded-xl p-6">
           <h2 className="text-xl font-bold text-white mb-4">
-            학생별 성장 기록
+            학생별 관찰 기록
           </h2>
           <div className="space-y-8">
             {Object.entries(userData).length === 0 ? (
@@ -250,117 +284,183 @@ export default function TeacherDashboard() {
               </div>
             ) : (
               Object.entries(userData).map(([uid, student]) => {
+                const studentEmail = student.plants
+                  ? Object.values(student.plants)[0]?.email
+                  : null;
+                if (!studentEmail) return null;
+
+                const studentAnswers = {
+                  germination: Object.entries(
+                    answerData.germination || {}
+                  ).find(([, answer]) => answer.email === studentEmail)?.[1],
+                  growth: Object.entries(answerData.growth || {}).find(
+                    ([, answer]) => answer.email === studentEmail
+                  )?.[1],
+                };
+
                 const growthData = getStudentGrowthData(student);
+
                 return (
-                  <div key={uid} className="space-y-4">
-                    <h3 className="font-semibold text-white">
-                      {(student.plants &&
-                        Object.values(student.plants)[0]?.userEmail) ||
-                        "이메일 없음"}
+                  <div
+                    key={uid}
+                    className="space-y-6 bg-gray-700/30 p-6 rounded-lg"
+                  >
+                    <h3 className="text-xl font-semibold text-white border-b border-gray-600 pb-2">
+                      {studentEmail}
                     </h3>
-                    <ChartContainer
-                      className="bg-gray-700/30 p-4 rounded-lg"
-                      config={{
-                        height: { color: "#10b981" },
-                        leaves: { color: "#3b82f6" },
-                        water: { color: "#6366f1" },
-                      }}
-                    >
-                      <LineChart data={growthData}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="date" />
-                        <YAxis />
-                        <Tooltip
-                          content={(props: TooltipProps<number, string>) => {
-                            if (
-                              props.active &&
-                              props.payload &&
-                              props.payload.length
-                            ) {
-                              const customPayload = props.payload[0]
-                                .payload as CustomTooltipPayload;
-                              return (
-                                <div className="bg-gray-800 p-3 rounded-lg shadow-lg">
-                                  <p className="text-white font-semibold">
-                                    {props.label}
-                                  </p>
-                                  {props.payload.map((entry) => (
-                                    <p
-                                      key={entry.name}
-                                      style={{ color: entry.color }}
-                                    >
-                                      {entry.name}: {entry.value}
+
+                    {/* 답변 섹션 */}
+                    <div className="space-y-4">
+                      <h4 className="text-lg font-medium text-white">
+                        학습 답변
+                      </h4>
+                      {studentAnswers.germination && (
+                        <div className="bg-gray-800/50 p-4 rounded-lg">
+                          <p className="text-gray-300 font-medium">
+                            씨가 싹트는데 필요한 조건:
+                          </p>
+                          <p className="text-white ml-4 mt-1">
+                            {studentAnswers.germination.answer}
+                          </p>
+                          <p className="text-gray-400 text-sm mt-2">
+                            작성일:{" "}
+                            {new Date(
+                              studentAnswers.germination.timestamp
+                            ).toLocaleString()}
+                          </p>
+                        </div>
+                      )}
+                      {studentAnswers.growth && (
+                        <div className="bg-gray-800/50 p-4 rounded-lg">
+                          <p className="text-gray-300 font-medium">
+                            식물이 자라나는데 필요한 조건:
+                          </p>
+                          <p className="text-white ml-4 mt-1">
+                            {studentAnswers.growth.answer}
+                          </p>
+                          <p className="text-gray-400 text-sm mt-2">
+                            작성일:{" "}
+                            {new Date(
+                              studentAnswers.growth.timestamp
+                            ).toLocaleString()}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* 성장 기록 차트 */}
+                    <div className="space-y-4">
+                      <h4 className="text-lg font-medium text-white">
+                        성장 기록
+                      </h4>
+                      <ChartContainer
+                        className="bg-gray-800/50 p-4 rounded-lg"
+                        config={{
+                          height: { color: "#10b981" },
+                          leaves: { color: "#3b82f6" },
+                          water: { color: "#6366f1" },
+                        }}
+                      >
+                        <LineChart data={growthData}>
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis dataKey="date" />
+                          <YAxis />
+                          <Tooltip
+                            content={(props: TooltipProps<number, string>) => {
+                              if (
+                                props.active &&
+                                props.payload &&
+                                props.payload.length
+                              ) {
+                                const customPayload = props.payload[0]
+                                  .payload as CustomTooltipPayload;
+                                return (
+                                  <div className="bg-gray-800 p-3 rounded-lg shadow-lg">
+                                    <p className="text-white font-semibold">
+                                      {props.label}
                                     </p>
-                                  ))}
-                                  <p className="text-gray-300 mt-2">
-                                    식물 색상:{" "}
-                                    {customPayload.color || "기록 없음"}
+                                    {props.payload.map((entry) => (
+                                      <p
+                                        key={entry.name}
+                                        style={{ color: entry.color }}
+                                      >
+                                        {entry.name}: {entry.value}
+                                      </p>
+                                    ))}
+                                    <p className="text-gray-300 mt-2">
+                                      식물 색상:{" "}
+                                      {customPayload.color || "기록 없음"}
+                                    </p>
+                                    {customPayload.notes && (
+                                      <p className="text-gray-300">
+                                        관찰 노트: {customPayload.notes}
+                                      </p>
+                                    )}
+                                  </div>
+                                );
+                              }
+                              return null;
+                            }}
+                          />
+                          <Legend />
+                          <Line
+                            type="monotone"
+                            dataKey="height"
+                            name="키(cm)"
+                            stroke="#10b981"
+                          />
+                          <Line
+                            type="monotone"
+                            dataKey="leaves"
+                            name="잎 수"
+                            stroke="#3b82f6"
+                          />
+                          <Line
+                            type="monotone"
+                            dataKey="water"
+                            name="물 주기(ml)"
+                            stroke="#6366f1"
+                          />
+                        </LineChart>
+                      </ChartContainer>
+
+                      {/* 최근 관찰 기록 */}
+                      <div className="space-y-2">
+                        <h4 className="text-lg font-medium text-white">
+                          최근 관찰 기록
+                        </h4>
+                        <div className="grid gap-4 md:grid-cols-2">
+                          {growthData
+                            .slice(-3)
+                            .reverse()
+                            .map((entry, index) => (
+                              <div
+                                key={index}
+                                className="bg-gray-800/50 p-4 rounded-lg"
+                              >
+                                <p className="text-gray-300">{entry.date}</p>
+                                <div className="mt-2 space-y-1">
+                                  <p className="text-white">
+                                    키: {entry.height}cm
                                   </p>
-                                  {customPayload.notes && (
-                                    <p className="text-gray-300">
-                                      관찰 노트: {customPayload.notes}
+                                  <p className="text-white">
+                                    잎 수: {entry.leaves}개
+                                  </p>
+                                  <p className="text-white">
+                                    물 주기: {entry.water}ml
+                                  </p>
+                                  <p className="text-white">
+                                    식물 색상: {entry.color || "기록 없음"}
+                                  </p>
+                                  {entry.notes && (
+                                    <p className="text-white">
+                                      관찰 노트: {entry.notes}
                                     </p>
                                   )}
                                 </div>
-                              );
-                            }
-                            return null;
-                          }}
-                        />
-                        <Legend />
-                        <Line
-                          type="monotone"
-                          dataKey="height"
-                          name="키(cm)"
-                          stroke="#10b981"
-                        />
-                        <Line
-                          type="monotone"
-                          dataKey="leaves"
-                          name="잎 수"
-                          stroke="#3b82f6"
-                        />
-                        <Line
-                          type="monotone"
-                          dataKey="water"
-                          name="물 주기(ml)"
-                          stroke="#6366f1"
-                        />
-                      </LineChart>
-                    </ChartContainer>
-                    <div className="mt-4 space-y-2">
-                      <h4 className="text-white font-medium">최근 관찰 기록</h4>
-                      <div className="grid gap-4 md:grid-cols-2">
-                        {growthData
-                          .slice(-3)
-                          .reverse()
-                          .map((entry, index) => (
-                            <div
-                              key={index}
-                              className="bg-gray-700/30 p-4 rounded-lg"
-                            >
-                              <p className="text-gray-300">{entry.date}</p>
-                              <div className="mt-2 space-y-1">
-                                <p className="text-white">
-                                  키: {entry.height}cm
-                                </p>
-                                <p className="text-white">
-                                  잎 수: {entry.leaves}개
-                                </p>
-                                <p className="text-white">
-                                  물 주기: {entry.water}ml
-                                </p>
-                                <p className="text-white">
-                                  식물 색상: {entry.color || "기록 없음"}
-                                </p>
-                                {entry.notes && (
-                                  <p className="text-white">
-                                    관찰 노트: {entry.notes}
-                                  </p>
-                                )}
                               </div>
-                            </div>
-                          ))}
+                            ))}
+                        </div>
                       </div>
                     </div>
                   </div>
