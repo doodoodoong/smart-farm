@@ -11,6 +11,7 @@ import {
   CartesianGrid,
   Tooltip,
   Legend,
+  TooltipProps,
 } from "recharts";
 import { ChartContainer } from "@/components/ui/chart";
 
@@ -64,19 +65,14 @@ interface DiaryEntry {
   notes: string;
 }
 
-interface TooltipPayload {
-  name: string;
-  value: number;
+interface CustomTooltipPayload {
   color: string;
-  payload: {
-    color: string;
-    notes: string;
-    date: string;
-    height: number;
-    leaves: number;
-    water: number;
-    [key: string]: string | number;
-  };
+  notes: string;
+  date: string;
+  height: number;
+  leaves: number;
+  water: number;
+  [key: string]: string | number;
 }
 
 export default function TeacherDashboard() {
@@ -263,15 +259,20 @@ export default function TeacherDashboard() {
                       <XAxis dataKey="date" />
                       <YAxis />
                       <Tooltip
-                        content={({ active, payload, label }) => {
-                          if (active && payload && payload.length) {
-                            const typedPayload = payload as TooltipPayload[];
+                        content={(props: TooltipProps<number, string>) => {
+                          if (
+                            props.active &&
+                            props.payload &&
+                            props.payload.length
+                          ) {
+                            const customPayload = props.payload[0]
+                              .payload as CustomTooltipPayload;
                             return (
                               <div className="bg-gray-800 p-3 rounded-lg shadow-lg">
                                 <p className="text-white font-semibold">
-                                  {label}
+                                  {props.label}
                                 </p>
-                                {typedPayload.map((entry) => (
+                                {props.payload.map((entry) => (
                                   <p
                                     key={entry.name}
                                     style={{ color: entry.color }}
@@ -281,11 +282,11 @@ export default function TeacherDashboard() {
                                 ))}
                                 <p className="text-gray-300 mt-2">
                                   식물 색상:{" "}
-                                  {typedPayload[0].payload.color || "기록 없음"}
+                                  {customPayload.color || "기록 없음"}
                                 </p>
-                                {typedPayload[0].payload.notes && (
+                                {customPayload.notes && (
                                   <p className="text-gray-300">
-                                    관찰 노트: {typedPayload[0].payload.notes}
+                                    관찰 노트: {customPayload.notes}
                                   </p>
                                 )}
                               </div>

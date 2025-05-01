@@ -42,6 +42,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface PlantInfo {
   plantId: string;
@@ -774,43 +775,44 @@ export default function GrowingPage() {
                         </h2>
                       </div>
 
-                      <div
-                        className="flex-grow space-y-4 overflow-y-auto pr-2 max-h-[calc(100vh-280px)]"
-                        style={{ scrollbarWidth: "thin" }}
-                      >
-                        {diaryRecords.length === 0 ? (
-                          <p className="text-gray-400 text-center py-8">
-                            아직 작성된 재배일지가 없습니다.
-                          </p>
-                        ) : (
-                          diaryRecords.map((record) => (
-                            <div
-                              key={`${record.plantId}-${record.createdAt}`}
-                              className="p-4 rounded-lg bg-gray-700/50 border border-gray-600 space-y-2"
-                            >
-                              <div className="flex justify-between items-start">
-                                <h3 className="text-white font-medium">
-                                  {record.plantName}
-                                </h3>
-                                <span className="text-xs text-gray-400">
-                                  {new Date(record.createdAt).toLocaleString()}
-                                </span>
+                      <ScrollArea className="flex-grow h-[calc(100vh-280px)]">
+                        <div className="space-y-4 pr-4">
+                          {diaryRecords.length === 0 ? (
+                            <p className="text-gray-400 text-center py-8">
+                              아직 작성된 재배일지가 없습니다.
+                            </p>
+                          ) : (
+                            diaryRecords.map((record) => (
+                              <div
+                                key={`${record.plantId}-${record.createdAt}`}
+                                className="p-4 rounded-lg bg-gray-700/50 border border-gray-600 space-y-2"
+                              >
+                                <div className="flex justify-between items-start">
+                                  <h3 className="text-white font-medium">
+                                    {record.plantName}
+                                  </h3>
+                                  <span className="text-xs text-gray-400">
+                                    {new Date(
+                                      record.createdAt
+                                    ).toLocaleString()}
+                                  </span>
+                                </div>
+                                <div className="grid grid-cols-2 gap-2 text-sm text-gray-300">
+                                  <p>잎 개수: {record.leafCount}</p>
+                                  <p>길이: {record.plantHeight}</p>
+                                  <p>물 공급량: {record.waterAmount}</p>
+                                  <p>색깔: {record.plantColor}</p>
+                                </div>
+                                {record.additionalNotes && (
+                                  <p className="text-sm text-gray-400 mt-2 border-t border-gray-600 pt-2">
+                                    {record.additionalNotes}
+                                  </p>
+                                )}
                               </div>
-                              <div className="grid grid-cols-2 gap-2 text-sm text-gray-300">
-                                <p>잎 개수: {record.leafCount}</p>
-                                <p>길이: {record.plantHeight}</p>
-                                <p>물 공급량: {record.waterAmount}</p>
-                                <p>색깔: {record.plantColor}</p>
-                              </div>
-                              {record.additionalNotes && (
-                                <p className="text-sm text-gray-400 mt-2 border-t border-gray-600 pt-2">
-                                  {record.additionalNotes}
-                                </p>
-                              )}
-                            </div>
-                          ))
-                        )}
-                      </div>
+                            ))
+                          )}
+                        </div>
+                      </ScrollArea>
                     </div>
                   </div>
                 </div>
