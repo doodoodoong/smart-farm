@@ -14,6 +14,7 @@ import {
   TooltipProps,
 } from "recharts";
 import { ChartContainer } from "@/components/ui/chart";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface PlantDiary {
   plantHeight: string;
@@ -211,150 +212,164 @@ export default function TeacherDashboard() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div className="bg-gray-800/50 p-6 rounded-xl">
-          <h3 className="text-lg font-semibold text-gray-300">전체 학생 수</h3>
-          <p className="text-3xl font-bold text-white mt-2">{studentCount}명</p>
+    <ScrollArea className="h-[calc(100vh-4rem)]">
+      <div className="space-y-6 p-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <div className="bg-gray-800/50 p-6 rounded-xl">
+            <h3 className="text-lg font-semibold text-gray-300">
+              전체 학생 수
+            </h3>
+            <p className="text-3xl font-bold text-white mt-2">
+              {studentCount}명
+            </p>
+          </div>
+          <div className="bg-gray-800/50 p-6 rounded-xl">
+            <h3 className="text-lg font-semibold text-gray-300">
+              관찰 식물 수
+            </h3>
+            <p className="text-3xl font-bold text-white mt-2">{plantCount}개</p>
+          </div>
+          <div className="bg-gray-800/50 p-6 rounded-xl">
+            <h3 className="text-lg font-semibold text-gray-300">
+              오늘의 관찰 기록
+            </h3>
+            <p className="text-3xl font-bold text-white mt-2">
+              {todayRecords}건
+            </p>
+          </div>
         </div>
-        <div className="bg-gray-800/50 p-6 rounded-xl">
-          <h3 className="text-lg font-semibold text-gray-300">관찰 식물 수</h3>
-          <p className="text-3xl font-bold text-white mt-2">{plantCount}개</p>
-        </div>
-        <div className="bg-gray-800/50 p-6 rounded-xl">
-          <h3 className="text-lg font-semibold text-gray-300">
-            오늘의 관찰 기록
-          </h3>
-          <p className="text-3xl font-bold text-white mt-2">{todayRecords}건</p>
-        </div>
-      </div>
 
-      <div className="bg-gray-800/50 rounded-xl p-6">
-        <h2 className="text-xl font-bold text-white mb-4">학생별 성장 기록</h2>
-        <div className="space-y-8">
-          {Object.entries(userData).length === 0 ? (
-            <div className="text-gray-400 text-center py-4">
-              등록된 학생이 없습니다.
-            </div>
-          ) : (
-            Object.entries(userData).map(([uid, student]) => {
-              const growthData = getStudentGrowthData(student);
-              return (
-                <div key={uid} className="space-y-4">
-                  <h3 className="font-semibold text-white">
-                    {(student.plants &&
-                      Object.values(student.plants)[0]?.userEmail) ||
-                      "이메일 없음"}
-                  </h3>
-                  <ChartContainer
-                    className="bg-gray-700/30 p-4 rounded-lg"
-                    config={{
-                      height: { color: "#10b981" },
-                      leaves: { color: "#3b82f6" },
-                      water: { color: "#6366f1" },
-                    }}
-                  >
-                    <LineChart data={growthData}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="date" />
-                      <YAxis />
-                      <Tooltip
-                        content={(props: TooltipProps<number, string>) => {
-                          if (
-                            props.active &&
-                            props.payload &&
-                            props.payload.length
-                          ) {
-                            const customPayload = props.payload[0]
-                              .payload as CustomTooltipPayload;
-                            return (
-                              <div className="bg-gray-800 p-3 rounded-lg shadow-lg">
-                                <p className="text-white font-semibold">
-                                  {props.label}
-                                </p>
-                                {props.payload.map((entry) => (
-                                  <p
-                                    key={entry.name}
-                                    style={{ color: entry.color }}
-                                  >
-                                    {entry.name}: {entry.value}
+        <div className="bg-gray-800/50 rounded-xl p-6">
+          <h2 className="text-xl font-bold text-white mb-4">
+            학생별 성장 기록
+          </h2>
+          <div className="space-y-8">
+            {Object.entries(userData).length === 0 ? (
+              <div className="text-gray-400 text-center py-4">
+                등록된 학생이 없습니다.
+              </div>
+            ) : (
+              Object.entries(userData).map(([uid, student]) => {
+                const growthData = getStudentGrowthData(student);
+                return (
+                  <div key={uid} className="space-y-4">
+                    <h3 className="font-semibold text-white">
+                      {(student.plants &&
+                        Object.values(student.plants)[0]?.userEmail) ||
+                        "이메일 없음"}
+                    </h3>
+                    <ChartContainer
+                      className="bg-gray-700/30 p-4 rounded-lg"
+                      config={{
+                        height: { color: "#10b981" },
+                        leaves: { color: "#3b82f6" },
+                        water: { color: "#6366f1" },
+                      }}
+                    >
+                      <LineChart data={growthData}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="date" />
+                        <YAxis />
+                        <Tooltip
+                          content={(props: TooltipProps<number, string>) => {
+                            if (
+                              props.active &&
+                              props.payload &&
+                              props.payload.length
+                            ) {
+                              const customPayload = props.payload[0]
+                                .payload as CustomTooltipPayload;
+                              return (
+                                <div className="bg-gray-800 p-3 rounded-lg shadow-lg">
+                                  <p className="text-white font-semibold">
+                                    {props.label}
                                   </p>
-                                ))}
-                                <p className="text-gray-300 mt-2">
-                                  식물 색상:{" "}
-                                  {customPayload.color || "기록 없음"}
+                                  {props.payload.map((entry) => (
+                                    <p
+                                      key={entry.name}
+                                      style={{ color: entry.color }}
+                                    >
+                                      {entry.name}: {entry.value}
+                                    </p>
+                                  ))}
+                                  <p className="text-gray-300 mt-2">
+                                    식물 색상:{" "}
+                                    {customPayload.color || "기록 없음"}
+                                  </p>
+                                  {customPayload.notes && (
+                                    <p className="text-gray-300">
+                                      관찰 노트: {customPayload.notes}
+                                    </p>
+                                  )}
+                                </div>
+                              );
+                            }
+                            return null;
+                          }}
+                        />
+                        <Legend />
+                        <Line
+                          type="monotone"
+                          dataKey="height"
+                          name="키(cm)"
+                          stroke="#10b981"
+                        />
+                        <Line
+                          type="monotone"
+                          dataKey="leaves"
+                          name="잎 수"
+                          stroke="#3b82f6"
+                        />
+                        <Line
+                          type="monotone"
+                          dataKey="water"
+                          name="물 주기(ml)"
+                          stroke="#6366f1"
+                        />
+                      </LineChart>
+                    </ChartContainer>
+                    <div className="mt-4 space-y-2">
+                      <h4 className="text-white font-medium">최근 관찰 기록</h4>
+                      <div className="grid gap-4 md:grid-cols-2">
+                        {growthData
+                          .slice(-3)
+                          .reverse()
+                          .map((entry, index) => (
+                            <div
+                              key={index}
+                              className="bg-gray-700/30 p-4 rounded-lg"
+                            >
+                              <p className="text-gray-300">{entry.date}</p>
+                              <div className="mt-2 space-y-1">
+                                <p className="text-white">
+                                  키: {entry.height}cm
                                 </p>
-                                {customPayload.notes && (
-                                  <p className="text-gray-300">
-                                    관찰 노트: {customPayload.notes}
+                                <p className="text-white">
+                                  잎 수: {entry.leaves}개
+                                </p>
+                                <p className="text-white">
+                                  물 주기: {entry.water}ml
+                                </p>
+                                <p className="text-white">
+                                  식물 색상: {entry.color || "기록 없음"}
+                                </p>
+                                {entry.notes && (
+                                  <p className="text-white">
+                                    관찰 노트: {entry.notes}
                                   </p>
                                 )}
                               </div>
-                            );
-                          }
-                          return null;
-                        }}
-                      />
-                      <Legend />
-                      <Line
-                        type="monotone"
-                        dataKey="height"
-                        name="키(cm)"
-                        stroke="#10b981"
-                      />
-                      <Line
-                        type="monotone"
-                        dataKey="leaves"
-                        name="잎 수"
-                        stroke="#3b82f6"
-                      />
-                      <Line
-                        type="monotone"
-                        dataKey="water"
-                        name="물 주기(ml)"
-                        stroke="#6366f1"
-                      />
-                    </LineChart>
-                  </ChartContainer>
-                  <div className="mt-4 space-y-2">
-                    <h4 className="text-white font-medium">최근 관찰 기록</h4>
-                    <div className="grid gap-4 md:grid-cols-2">
-                      {growthData
-                        .slice(-3)
-                        .reverse()
-                        .map((entry, index) => (
-                          <div
-                            key={index}
-                            className="bg-gray-700/30 p-4 rounded-lg"
-                          >
-                            <p className="text-gray-300">{entry.date}</p>
-                            <div className="mt-2 space-y-1">
-                              <p className="text-white">키: {entry.height}cm</p>
-                              <p className="text-white">
-                                잎 수: {entry.leaves}개
-                              </p>
-                              <p className="text-white">
-                                물 주기: {entry.water}ml
-                              </p>
-                              <p className="text-white">
-                                식물 색상: {entry.color || "기록 없음"}
-                              </p>
-                              {entry.notes && (
-                                <p className="text-white">
-                                  관찰 노트: {entry.notes}
-                                </p>
-                              )}
                             </div>
-                          </div>
-                        ))}
+                          ))}
+                      </div>
                     </div>
                   </div>
-                </div>
-              );
-            })
-          )}
+                );
+              })
+            )}
+          </div>
         </div>
       </div>
-    </div>
+    </ScrollArea>
   );
 }
