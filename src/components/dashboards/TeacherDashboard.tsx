@@ -18,9 +18,14 @@ interface PlantDiary {
   plantHeight: string;
   leafCount: string;
   waterAmount: string;
+  plantColor: string;
+  additionalNotes: string;
   createdAt: string;
   plantName: string;
   userEmail: string;
+  diaryId: string;
+  plantId: string;
+  lastModified: string;
 }
 
 interface Plant {
@@ -55,6 +60,23 @@ interface DiaryEntry {
   height: number;
   leaves: number;
   water: number;
+  color: string;
+  notes: string;
+}
+
+interface TooltipPayload {
+  name: string;
+  value: number;
+  color: string;
+  payload: {
+    color: string;
+    notes: string;
+    date: string;
+    height: number;
+    leaves: number;
+    water: number;
+    [key: string]: string | number;
+  };
 }
 
 export default function TeacherDashboard() {
@@ -164,6 +186,8 @@ export default function TeacherDashboard() {
             height: Number(diary.plantHeight),
             leaves: Number(diary.leafCount),
             water: Number(diary.waterAmount),
+            color: diary.plantColor,
+            notes: diary.additionalNotes,
           });
         });
       });
@@ -217,49 +241,116 @@ export default function TeacherDashboard() {
               등록된 학생이 없습니다.
             </div>
           ) : (
-            Object.entries(userData).map(([uid, student]) => (
-              <div key={uid} className="space-y-4">
-                <h3 className="font-semibold text-white">
-                  {(student.plants &&
-                    Object.values(student.plants)[0]?.userEmail) ||
-                    "이메일 없음"}
-                </h3>
-                <ChartContainer
-                  className="bg-gray-700/30 p-4 rounded-lg"
-                  config={{
-                    height: { color: "#10b981" },
-                    leaves: { color: "#3b82f6" },
-                    water: { color: "#6366f1" },
-                  }}
-                >
-                  <LineChart data={getStudentGrowthData(student)}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="date" />
-                    <YAxis />
-                    <Tooltip />
-                    <Legend />
-                    <Line
-                      type="monotone"
-                      dataKey="height"
-                      name="키(cm)"
-                      stroke="#10b981"
-                    />
-                    <Line
-                      type="monotone"
-                      dataKey="leaves"
-                      name="잎 수"
-                      stroke="#3b82f6"
-                    />
-                    <Line
-                      type="monotone"
-                      dataKey="water"
-                      name="물 주기(ml)"
-                      stroke="#6366f1"
-                    />
-                  </LineChart>
-                </ChartContainer>
-              </div>
-            ))
+            Object.entries(userData).map(([uid, student]) => {
+              const growthData = getStudentGrowthData(student);
+              return (
+                <div key={uid} className="space-y-4">
+                  <h3 className="font-semibold text-white">
+                    {(student.plants &&
+                      Object.values(student.plants)[0]?.userEmail) ||
+                      "이메일 없음"}
+                  </h3>
+                  <ChartContainer
+                    className="bg-gray-700/30 p-4 rounded-lg"
+                    config={{
+                      height: { color: "#10b981" },
+                      leaves: { color: "#3b82f6" },
+                      water: { color: "#6366f1" },
+                    }}
+                  >
+                    <LineChart data={growthData}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="date" />
+                      <YAxis />
+                      <Tooltip
+                        content={({ active, payload, label }) => {
+                          if (active && payload && payload.length) {
+                            const typedPayload = payload as TooltipPayload[];
+                            return (
+                              <div className="bg-gray-800 p-3 rounded-lg shadow-lg">
+                                <p className="text-white font-semibold">
+                                  {label}
+                                </p>
+                                {typedPayload.map((entry) => (
+                                  <p
+                                    key={entry.name}
+                                    style={{ color: entry.color }}
+                                  >
+                                    {entry.name}: {entry.value}
+                                  </p>
+                                ))}
+                                <p className="text-gray-300 mt-2">
+                                  식물 색상:{" "}
+                                  {typedPayload[0].payload.color || "기록 없음"}
+                                </p>
+                                {typedPayload[0].payload.notes && (
+                                  <p className="text-gray-300">
+                                    관찰 노트: {typedPayload[0].payload.notes}
+                                  </p>
+                                )}
+                              </div>
+                            );
+                          }
+                          return null;
+                        }}
+                      />
+                      <Legend />
+                      <Line
+                        type="monotone"
+                        dataKey="height"
+                        name="키(cm)"
+                        stroke="#10b981"
+                      />
+                      <Line
+                        type="monotone"
+                        dataKey="leaves"
+                        name="잎 수"
+                        stroke="#3b82f6"
+                      />
+                      <Line
+                        type="monotone"
+                        dataKey="water"
+                        name="물 주기(ml)"
+                        stroke="#6366f1"
+                      />
+                    </LineChart>
+                  </ChartContainer>
+                  <div className="mt-4 space-y-2">
+                    <h4 className="text-white font-medium">최근 관찰 기록</h4>
+                    <div className="grid gap-4 md:grid-cols-2">
+                      {growthData
+                        .slice(-3)
+                        .reverse()
+                        .map((entry, index) => (
+                          <div
+                            key={index}
+                            className="bg-gray-700/30 p-4 rounded-lg"
+                          >
+                            <p className="text-gray-300">{entry.date}</p>
+                            <div className="mt-2 space-y-1">
+                              <p className="text-white">키: {entry.height}cm</p>
+                              <p className="text-white">
+                                잎 수: {entry.leaves}개
+                              </p>
+                              <p className="text-white">
+                                물 주기: {entry.water}ml
+                              </p>
+                              <p className="text-white">
+                                식물 색상: {entry.color || "기록 없음"}
+                              </p>
+                              {entry.notes && (
+                                <p className="text-white">
+                                  관찰 노트: {entry.notes}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                    </div>
+                  </div>
+                </div>
+              );
+            })
           )}
         </div>
       </div>
