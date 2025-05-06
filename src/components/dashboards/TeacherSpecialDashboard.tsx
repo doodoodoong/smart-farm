@@ -93,9 +93,12 @@ export default function TeacherSpecialDashboard() {
               specialDiaries?: Record<string, Record<string, SpecialDiary>>;
               email?: string;
             };
-            const email =
+            // email을 string으로 안전하게 변환
+            const emailRaw =
               u.specialAnswers?.email || u.specialDiaries?.email || u.email;
-            if (!email) return;
+            const email =
+              typeof emailRaw === "string" ? emailRaw : String(emailRaw ?? "");
+            if (!email || email === "undefined" || email === "null") return;
             // 답변
             let answers: SpecialAnswer | undefined = undefined;
             if (u.specialAnswers) {
@@ -153,7 +156,9 @@ export default function TeacherSpecialDashboard() {
                 (Array.isArray(diaries) && diaries.length > 0
                   ? diaries[0].name
                   : undefined) ||
-                email.split("@")[0],
+                (typeof email === "string" && email.includes("@")
+                  ? email.split("@")[0]
+                  : email),
               email,
               answers,
               diaries: Array.isArray(diaries) ? diaries : [],
