@@ -4,7 +4,14 @@ import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { database } from "@/lib/firebase";
-import { ref, push } from "firebase/database";
+import {
+  ref,
+  push,
+  get,
+  query,
+  orderByChild,
+  equalTo,
+} from "firebase/database";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { getAuth, signInAnonymously, updateProfile } from "firebase/auth";
@@ -23,22 +30,39 @@ export default function SpecialLoginPage() {
     }
     setLoading(true);
     try {
-      // 1. 익명 인증
+      // 1. specialStudents에서 같은 이름이 있는지 확인
+      const specialRef = ref(database, "specialStudents");
+      const q = query(specialRef, orderByChild("name"), equalTo(name.trim()));
+      const snapshot = await get(q);
+      if (snapshot.exists()) {
+        // 1. 익명 인증
+        const result = await signInAnonymously(auth);
+        const user = result.user;
+        // 2. displayName 업데이트(선택)
+        await updateProfile(user, { displayName: name.trim() });
+        // **여기서 이름을 localStorage에 저장**
+        localStorage.setItem("specialStudentName", name.trim());
+        toast.success("이미 등록된 이름입니다. 대시보드로 이동합니다.");
+        await router.replace("/special-dashboard");
+        setLoading(false);
+        return;
+      }
+      // 2. 익명 인증
       const result = await signInAnonymously(auth);
       const user = result.user;
-      // 2. 입력한 이름을 displayName에 저장
+      // 3. 입력한 이름을 displayName에 저장
       await updateProfile(user, { displayName: name.trim() });
-      // 3. 이름과 uid를 specialStudents에 저장
-      const specialRef = ref(database, "specialStudents");
+      // 4. 이름과 uid를 specialStudents에 저장
       await push(specialRef, {
         uid: user.uid,
         name: name.trim(),
         createdAt: Date.now(),
       });
       toast.success("이름이 성공적으로 저장되었습니다.");
-      setName("");
-      router.push("/special-dashboard");
+      setLoading(false);
+      await router.push("/special-dashboard");
     } catch (error: unknown) {
+      console.error(error);
       if (
         error &&
         typeof error === "object" &&
@@ -51,7 +75,6 @@ export default function SpecialLoginPage() {
       } else {
         toast.error("저장 중 오류가 발생했습니다.");
       }
-    } finally {
       setLoading(false);
     }
   };
