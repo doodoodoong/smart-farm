@@ -2,15 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
-import {
-  ArrowLeft,
-  Video,
-  Pencil,
-  Trash2,
-  Save,
-  ArrowRight,
-  HelpCircle,
-} from "lucide-react";
+import { ArrowLeft, Video, Save } from "lucide-react";
 import {
   ResizableHandle,
   ResizablePanel,
@@ -19,51 +11,19 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { database } from "@/lib/firebase";
-import { ref, set, remove, onValue } from "firebase/database";
+import { ref, set, onValue } from "firebase/database";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { useAuth } from "@/components/auth/AuthContext";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import { Badge } from "@/components/ui/badge";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { ScrollArea } from "@/components/ui/scroll-area";
-
-interface PlantInfo {
-  plantId: string;
-  plantName: string;
-  temperature: string;
-  humidity: string;
-  createdAt: string;
-  lastModified: string;
-  email: string;
-  name: string;
-}
 
 interface DiaryEntry {
   diaryId: string;
   plantId: string;
-  plantName: string;
   leafCount: string;
-  plantHeight: string;
-  waterAmount: string;
-  plantColor: string;
-  additionalNotes: string;
+  grewTaller: "yes" | "no" | "unknown";
+  newLeaf: "yes" | "no";
+  feeling: "happy" | "neutral" | "sad";
   createdAt: string;
   lastModified: string;
   email: string;
@@ -73,338 +33,57 @@ interface DiaryEntry {
 export default function SpecialGrowingPage() {
   const router = useRouter();
   const { user } = useAuth();
-  const [currentStep, setCurrentStep] = useState<"info" | "diary">("info");
-  const [plantInfo, setPlantInfo] = useState<PlantInfo>({
-    plantId: "",
-    plantName: "",
-    temperature: "",
-    humidity: "",
-    createdAt: "",
-    lastModified: "",
-    email: "",
-    name: "",
-  });
   const [diaryEntry, setDiaryEntry] = useState<
     Omit<DiaryEntry, "diaryId" | "createdAt" | "lastModified">
   >({
     plantId: "",
-    plantName: "",
     leafCount: "",
-    plantHeight: "",
-    waterAmount: "",
-    plantColor: "",
-    additionalNotes: "",
+    grewTaller: "unknown",
+    newLeaf: "no",
+    feeling: "neutral",
     email: "",
     name: "",
   });
   const [diaryRecords, setDiaryRecords] = useState<DiaryEntry[]>([]);
-  const [savedPlant, setSavedPlant] = useState<PlantInfo | null>(null);
-  const [isEditing, setIsEditing] = useState(false);
-  const [errors, setErrors] = useState({
-    temperature: "",
-    humidity: "",
-  });
-
-  const validateNumber = (value: string, min: number, max: number) => {
-    const num = Number(value);
-    return !isNaN(num) && num >= min && num <= max;
-  };
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-
-    if (name === "temperature" || name === "humidity") {
-      // 숫자와 하이픈(-)만 허용
-      const sanitizedValue = value.replace(/[^\d-]/g, "");
-
-      // 유효성 검사
-      let error = "";
-      if (sanitizedValue) {
-        if (name === "temperature") {
-          if (!validateNumber(sanitizedValue, -20, 40)) {
-            error = "온도는 -20°C에서 40°C 사이여야 합니다";
-          }
-        } else if (name === "humidity") {
-          if (!validateNumber(sanitizedValue, 0, 100)) {
-            error = "습도는 0%에서 100% 사이여야 합니다";
-          }
-        }
-      }
-
-      setErrors((prev) => ({
-        ...prev,
-        [name]: error,
-      }));
-
-      setPlantInfo((prev) => ({
-        ...prev,
-        [name]: sanitizedValue,
-      }));
-    } else {
-      setPlantInfo((prev) => ({
-        ...prev,
-        [name]: value,
-      }));
-    }
-  };
-
-  const handleSavePlantInfo = async () => {
-    if (!user || !user.displayName) {
-      toast.error("로그인이 필요합니다", {
-        description: "식별 가능한 이름으로 로그인해야 합니다.",
-      });
-      return;
-    }
-
-    if (!plantInfo.plantName || !plantInfo.temperature || !plantInfo.humidity) {
-      toast.error("입력 오류", {
-        description: "모든 필드를 입력해주세요.",
-      });
-      return;
-    }
-
-    if (
-      !validateNumber(plantInfo.temperature, -20, 40) ||
-      !validateNumber(plantInfo.humidity, 0, 100)
-    ) {
-      toast.error("입력 오류", {
-        description: "온도나 습도가 허용 범위를 벗어났습니다.",
-      });
-      return;
-    }
-
-    try {
-      const plantId = savedPlant?.plantId || Date.now().toString();
-      const plantRef = ref(database, `users/${user.uid}/plants/${plantId}`);
-
-      const updatedPlantInfo: PlantInfo = {
-        plantId,
-        plantName: plantInfo.plantName,
-        temperature: plantInfo.temperature,
-        humidity: plantInfo.humidity,
-        createdAt: savedPlant?.createdAt || new Date().toISOString(),
-        lastModified: new Date().toISOString(),
-        email: user.displayName,
-        name: user.displayName,
-      };
-
-      await set(plantRef, updatedPlantInfo);
-
-      toast.success(savedPlant ? "수정 완료" : "저장 완료", {
-        description: savedPlant
-          ? "식물 정보가 성공적으로 수정되었습니다."
-          : "식물 정보가 성공적으로 저장되었습니다.",
-      });
-
-      setSavedPlant(updatedPlantInfo);
-      setDiaryEntry((prev) => ({
-        ...prev,
-        plantId,
-        plantName: plantInfo.plantName,
-      }));
-    } catch (error) {
-      console.error("Firebase 저장 오류:", error);
-      handleFirebaseError(error, "식물 정보");
-    }
-  };
-
-  const handleSaveDiary = async () => {
-    if (!user || !user.displayName || !savedPlant) {
-      toast.error("저장 실패", {
-        description: "먼저 식물 정보를 저장해주세요.",
-      });
-      return;
-    }
-
-    try {
-      const diaryId = Date.now().toString();
-      const diaryRef = ref(
-        database,
-        `users/${user.uid}/diaries/${savedPlant.plantId}/${diaryId}`
-      );
-
-      const newDiaryEntry: DiaryEntry = {
-        diaryId,
-        plantId: savedPlant.plantId,
-        plantName: savedPlant.plantName,
-        leafCount: diaryEntry.leafCount,
-        plantHeight: diaryEntry.plantHeight,
-        waterAmount: diaryEntry.waterAmount,
-        plantColor: diaryEntry.plantColor,
-        additionalNotes: diaryEntry.additionalNotes,
-        createdAt: new Date().toISOString(),
-        lastModified: new Date().toISOString(),
-        email: user.displayName,
-        name: user.displayName,
-      };
-
-      await set(diaryRef, newDiaryEntry);
-
-      toast.success("재배일지 저장 완료", {
-        description: "재배일지가 성공적으로 저장되었습니다.",
-      });
-
-      setDiaryEntry((prev) => ({
-        ...prev,
-        leafCount: "",
-        plantHeight: "",
-        waterAmount: "",
-        plantColor: "",
-        additionalNotes: "",
-      }));
-    } catch (error) {
-      console.error("Firebase 저장 오류:", error);
-      handleFirebaseError(error, "재배일지");
-    }
-  };
 
   const handleFirebaseError = (error: unknown, context: string) => {
     let errorMessage = `${context} 저장 중 오류가 발생했습니다.`;
     if (error && typeof error === "object" && "code" in error) {
-      if (error.code === "PERMISSION_DENIED") {
+      if ((error as { code?: string }).code === "PERMISSION_DENIED") {
         errorMessage =
           "데이터베이스 접근 권한이 없습니다. 로그인 상태를 확인해주세요.";
         if (!user) {
           errorMessage = "로그인 세션이 만료되었습니다. 다시 로그인해주세요.";
           router.push("/special-login");
         }
-      } else if (error.code === "NETWORK_ERROR") {
+      } else if ((error as { code?: string }).code === "NETWORK_ERROR") {
         errorMessage = "네트워크 연결을 확인해주세요.";
       }
     }
     toast.error("저장 실패", { description: errorMessage });
   };
 
-  const handleEdit = () => {
-    if (savedPlant) {
-      setPlantInfo(savedPlant);
-      setIsEditing(true);
-      setErrors({
-        temperature: "",
-        humidity: "",
-      });
-    }
-  };
-
-  const handleDelete = async () => {
-    if (!user || !user.displayName || !savedPlant?.plantId) {
-      toast.error("권한 오류", {
-        description: "삭제 권한이 없습니다. 로그인 상태를 확인해주세요.",
-      });
-      return;
-    }
-
-    try {
-      const plantRef = ref(
-        database,
-        `users/${user.uid}/plants/${savedPlant.plantId}`
-      );
-      await remove(plantRef);
-
-      toast.success("삭제 완료", {
-        description: "식물 정보가 삭제되었습니다.",
-      });
-
-      setSavedPlant(null);
-      setPlantInfo({
-        plantId: "",
-        plantName: "",
-        temperature: "",
-        humidity: "",
-        createdAt: "",
-        lastModified: "",
-        email: "",
-        name: "",
-      });
-      setErrors({
-        temperature: "",
-        humidity: "",
-      });
-    } catch (error) {
-      console.error("Firebase 삭제 오류:", error);
-      let errorMessage = "식물 정보 삭제 중 오류가 발생했습니다.";
-      if (error && typeof error === "object" && "code" in error) {
-        if (error.code === "PERMISSION_DENIED") {
-          errorMessage = "삭제 권한이 없습니다. 로그인 상태를 확인해주세요.";
-          if (!user) {
-            errorMessage = "로그인 세션이 만료되었습니다. 다시 로그인해주세요.";
-            router.push("/special-login");
-          }
-        }
-      }
-      toast.error("삭제 실패", {
-        description: errorMessage,
-      });
-    }
-  };
-
-  // 실시간 데이터 동기화
   useEffect(() => {
-    if (!user || !user.displayName) return;
-
-    // 식물 정보 실시간 동기화
-    const plantsRef = ref(database, `users/${user.uid}/plants`);
-    const diariesRef = ref(database, `users/${user.uid}/diaries`);
-
-    const unsubscribePlants = onValue(plantsRef, (snapshot) => {
-      try {
-        if (snapshot.exists()) {
-          const plants = snapshot.val();
-          const uniquePlants = Object.values(
-            plants as Record<string, PlantInfo>
-          );
-
-          // 중복 제거 및 정렬
-          const filteredPlants = uniquePlants
-            .filter(
-              (plant, index, self) =>
-                index === self.findIndex((p) => p.plantId === plant.plantId)
-            )
-            .sort((a, b) => a.plantName.localeCompare(b.plantName));
-
-          // 가장 최근 식물 정보 설정
-          if (filteredPlants.length > 0 && !savedPlant) {
-            const mostRecent = filteredPlants.sort(
-              (a, b) =>
-                new Date(b.lastModified).getTime() -
-                new Date(a.lastModified).getTime()
-            )[0];
-            setPlantInfo(mostRecent);
-            setSavedPlant(mostRecent);
-            setErrors({
-              temperature: "",
-              humidity: "",
-            });
-          }
-        }
-      } catch (error) {
-        console.error("식물 정보 로딩 오류:", error);
-        handleFirebaseError(error, "식물 정보");
-      }
-    });
-
-    // 재배일지 실시간 동기화
+    if (!user) return;
+    const diariesRef = ref(database, `users/${user.uid}/specialDiaries`);
     const unsubscribeDiaries = onValue(diariesRef, (snapshot) => {
       try {
         if (snapshot.exists()) {
           const diariesData = snapshot.val();
           const allDiaries: DiaryEntry[] = [];
-
-          // 모든 식물의 재배일지를 하나의 배열로 변환
           Object.values(
             diariesData as Record<string, Record<string, DiaryEntry>>
           ).forEach((plantDiaries) => {
-            Object.values(plantDiaries).forEach((diary) => {
-              allDiaries.push(diary);
-            });
+            Object.values(plantDiaries as Record<string, DiaryEntry>).forEach(
+              (diary) => {
+                allDiaries.push(diary as DiaryEntry);
+              }
+            );
           });
-
-          // 날짜순으로 정렬
           allDiaries.sort(
             (a, b) =>
               new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
           );
-
           setDiaryRecords(allDiaries);
         } else {
           setDiaryRecords([]);
@@ -414,12 +93,54 @@ export default function SpecialGrowingPage() {
         handleFirebaseError(error, "재배일지");
       }
     });
-
     return () => {
-      unsubscribePlants();
       unsubscribeDiaries();
     };
-  }, [user, router, savedPlant]);
+  }, [user, router]);
+
+  const handleSaveDiary = async () => {
+    if (!user || (!user.displayName && !user.email)) {
+      toast.error("저장 실패", {
+        description: "로그인이 필요합니다.",
+      });
+      return;
+    }
+    try {
+      const diaryId = Date.now().toString();
+      const diaryRef = ref(
+        database,
+        `users/${user.uid}/specialDiaries/${
+          diaryEntry.plantId || "default"
+        }/${diaryId}`
+      );
+      const newDiaryEntry: DiaryEntry = {
+        diaryId,
+        plantId: diaryEntry.plantId || "",
+        leafCount: diaryEntry.leafCount,
+        grewTaller: diaryEntry.grewTaller,
+        newLeaf: diaryEntry.newLeaf,
+        feeling: diaryEntry.feeling,
+        createdAt: new Date().toISOString(),
+        lastModified: new Date().toISOString(),
+        email: user.email ?? "",
+        name: user.displayName ?? user.email ?? "",
+      };
+      await set(diaryRef, newDiaryEntry);
+      toast.success("재배일지 저장 완료", {
+        description: "재배일지가 성공적으로 저장되었습니다.",
+      });
+      setDiaryEntry((prev) => ({
+        ...prev,
+        leafCount: "",
+        grewTaller: "unknown",
+        newLeaf: "no",
+        feeling: "neutral",
+      }));
+    } catch (error) {
+      console.error("Firebase 저장 오류:", error);
+      handleFirebaseError(error, "재배일지");
+    }
+  };
 
   const handleDiaryChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -431,150 +152,13 @@ export default function SpecialGrowingPage() {
     }));
   };
 
-  const renderInfoStep = () => (
-    <div className="space-y-6">
-      <div className="space-y-2">
-        <Label htmlFor="plantName" className="text-white">
-          기르고자 하는 식물을 작성해주세요
-        </Label>
-        <Input
-          id="plantName"
-          name="plantName"
-          value={plantInfo.plantName}
-          onChange={handleInputChange}
-          className="bg-gray-700 text-white border-gray-600"
-          placeholder="예: 방울토마토"
-        />
-      </div>
-
-      <div>
-        <Label className="text-white mb-4 block">
-          식물이 잘 자라기 위한 조건을 아래에 작성해주세요
-        </Label>
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="temperature" className="text-white pl-4">
-              적합한 온도
-            </Label>
-            <Input
-              id="temperature"
-              name="temperature"
-              value={plantInfo.temperature}
-              onChange={handleInputChange}
-              className={`bg-gray-700 text-white border-gray-600 ${
-                errors.temperature ? "border-red-500" : ""
-              }`}
-              placeholder="예: 25"
-            />
-            {errors.temperature && (
-              <p className="text-sm text-red-500 mt-1">{errors.temperature}</p>
-            )}
-            <p className="text-sm text-gray-400 mt-1">
-              -20°C ~ 40°C 사이의 숫자를 입력하세요
-            </p>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="humidity" className="text-white pl-4">
-              적합한 습도
-            </Label>
-            <Input
-              id="humidity"
-              name="humidity"
-              value={plantInfo.humidity}
-              onChange={handleInputChange}
-              className={`bg-gray-700 text-white border-gray-600 ${
-                errors.humidity ? "border-red-500" : ""
-              }`}
-              placeholder="예: 60"
-            />
-            {errors.humidity && (
-              <p className="text-sm text-red-500 mt-1">{errors.humidity}</p>
-            )}
-            <p className="text-sm text-gray-400 mt-1">
-              0% ~ 100% 사이의 숫자를 입력하세요
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {savedPlant && !isEditing && (
-        <div className="mt-8 p-4 bg-gray-700/50 rounded-lg">
-          <div className="flex justify-between items-start mb-4">
-            <h3 className="text-lg font-semibold text-white">저장된 정보</h3>
-            <div className="space-x-2">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleEdit}
-                className="text-blue-400 hover:text-blue-300"
-              >
-                <Pencil className="h-4 w-4 mr-1" />
-                수정
-              </Button>
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="text-red-400 hover:text-red-300"
-                  >
-                    <Trash2 className="h-4 w-4 mr-1" />
-                    삭제
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent className="bg-gray-800 text-white border-gray-700">
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>식물 정보 삭제</AlertDialogTitle>
-                    <AlertDialogDescription className="text-gray-400">
-                      정말로 이 식물 정보를 삭제하시겠습니까? 이 작업은 되돌릴
-                      수 없습니다.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel className="bg-gray-700 text-white hover:bg-gray-600">
-                      취소
-                    </AlertDialogCancel>
-                    <AlertDialogAction
-                      onClick={handleDelete}
-                      className="bg-red-600 text-white hover:bg-red-500"
-                    >
-                      삭제
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            </div>
-          </div>
-          <div className="space-y-2 text-gray-300">
-            <p>식물: {savedPlant.plantName}</p>
-            <p>적정 온도: {savedPlant.temperature}°C</p>
-            <p>적정 습도: {savedPlant.humidity}%</p>
-          </div>
-        </div>
-      )}
-
-      <div className="space-y-4 pt-4">
-        <Button
-          onClick={handleSavePlantInfo}
-          className="w-full bg-green-600 hover:bg-green-700 text-white"
-          disabled={!!errors.temperature || !!errors.humidity}
-        >
-          <Save className="h-4 w-4 mr-2" />
-          {isEditing ? "수정사항 저장" : "정보 저장"}
-        </Button>
-
-        {savedPlant && (
-          <Button
-            onClick={() => setCurrentStep("diary")}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white"
-          >
-            <ArrowRight className="h-4 w-4 mr-2" />
-            재배일지 작성하기
-          </Button>
-        )}
-      </div>
-    </div>
-  );
+  const handleRadioChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setDiaryEntry((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
 
   return (
     <ScrollArea className="h-screen">
@@ -590,9 +174,7 @@ export default function SpecialGrowingPage() {
               돌아가기
             </Button>
           </div>
-
           <h1 className="text-2xl font-bold text-white mb-8">식물 키우기</h1>
-
           <div className="flex-1 -mx-6">
             <ResizablePanelGroup
               direction="horizontal"
@@ -646,140 +228,162 @@ export default function SpecialGrowingPage() {
               <ResizablePanel defaultSize={35} minSize={30}>
                 <div className="h-full p-6">
                   <div className="h-full rounded-lg border border-gray-700 bg-gray-800/50">
-                    {currentStep === "info" ? (
-                      <div className="p-6">{renderInfoStep()}</div>
-                    ) : (
-                      <div className="p-6 h-full">
-                        <div className="flex justify-between items-center mb-4">
-                          <h2 className="text-lg font-semibold text-white">
-                            재배일지 작성
-                          </h2>
-                          <Button
-                            variant="ghost"
-                            onClick={() => setCurrentStep("info")}
-                            className="text-white hover:bg-white hover:text-black"
-                          >
-                            <ArrowLeft className="h-4 w-4 mr-2" />
-                            이전 단계로
-                          </Button>
-                        </div>
-
-                        <div className="space-y-4">
-                          <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                              <Label htmlFor="leafCount" className="text-white">
-                                잎의 개수는 몇개인가요?
-                              </Label>
-                              <Input
-                                id="leafCount"
-                                name="leafCount"
-                                value={diaryEntry.leafCount}
-                                onChange={handleDiaryChange}
-                                className="bg-gray-700 text-white border-gray-600"
-                                placeholder="예: 5개"
-                              />
-                            </div>
-
-                            <div className="space-y-2">
-                              <Label
-                                htmlFor="plantHeight"
-                                className="text-white"
-                              >
-                                식물의 길이는 얼마인가요?
-                              </Label>
-                              <Input
-                                id="plantHeight"
-                                name="plantHeight"
-                                value={diaryEntry.plantHeight}
-                                onChange={handleDiaryChange}
-                                className="bg-gray-700 text-white border-gray-600"
-                                placeholder="예: 10cm"
-                              />
-                            </div>
-                          </div>
-
-                          <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                              <Label
-                                htmlFor="waterAmount"
-                                className="text-white flex items-center gap-2"
-                              >
-                                물은 얼마나 공급되었나요?
-                                <TooltipProvider>
-                                  <Tooltip>
-                                    <TooltipTrigger asChild>
-                                      <Badge
-                                        variant="outline"
-                                        className="text-xs cursor-help text-white border-white/40 hover:bg-white/10"
-                                      >
-                                        <HelpCircle className="h-3 w-3 mr-1" />
-                                        도움말
-                                      </Badge>
-                                    </TooltipTrigger>
-                                    <TooltipContent className="bg-gray-800 text-white border-gray-700">
-                                      <p>
-                                        비커의 눈금을 정확하게 측정하여
-                                        작성해주세요
-                                      </p>
-                                    </TooltipContent>
-                                  </Tooltip>
-                                </TooltipProvider>
-                              </Label>
-                              <Input
-                                id="waterAmount"
-                                name="waterAmount"
-                                value={diaryEntry.waterAmount}
-                                onChange={handleDiaryChange}
-                                className="bg-gray-700 text-white border-gray-600"
-                                placeholder="예: 100ml"
-                              />
-                            </div>
-
-                            <div className="space-y-2">
-                              <Label
-                                htmlFor="plantColor"
-                                className="text-white"
-                              >
-                                식물의 색깔은 어떠한가요?
-                              </Label>
-                              <Input
-                                id="plantColor"
-                                name="plantColor"
-                                value={diaryEntry.plantColor}
-                                onChange={handleDiaryChange}
-                                className="bg-gray-700 text-white border-gray-600"
-                                placeholder="예: 진한 초록색"
-                              />
-                            </div>
-                          </div>
-
-                          <div className="space-y-2">
-                            <Label
-                              htmlFor="additionalNotes"
-                              className="text-white"
-                            >
-                              그 외 관찰내용을 작성해주세요
-                            </Label>
-                            <Textarea
-                              id="additionalNotes"
-                              name="additionalNotes"
-                              value={diaryEntry.additionalNotes}
-                              onChange={handleDiaryChange}
-                              className="min-h-[100px] bg-gray-700 text-white border-gray-600"
-                              placeholder="예: 잎이 시들어 보이지만 새로운 잎이 나오기 시작했다..."
-                            />
-                          </div>
-
-                          <Button
-                            onClick={handleSaveDiary}
-                            className="w-full bg-green-600 hover:bg-green-700 text-white"
-                          >
-                            <Save className="h-4 w-4 mr-2" />
-                            재배일지 저장
-                          </Button>
-                        </div>
+                    <div className="p-6 h-full">
+                      <div className="flex justify-between items-center mb-4">
+                        <h2 className="text-lg font-semibold text-white">
+                          재배일지 작성
+                        </h2>
                       </div>
-                    )}
+                      <div className="space-y-6">
+                        <div className="space-y-2">
+                          <Label htmlFor="leafCount" className="text-white">
+                            잎이 몇 장 있나요?
+                          </Label>
+                          <div className="flex items-center gap-2">
+                            <Input
+                              id="leafCount"
+                              name="leafCount"
+                              type="number"
+                              min="0"
+                              value={diaryEntry.leafCount}
+                              onChange={handleDiaryChange}
+                              className="bg-gray-700 text-white border-gray-600 w-32"
+                              placeholder="숫자 입력"
+                            />
+                            <span className="text-white">장</span>
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-white">
+                            오늘 식물의 키가 전보다 <b>커졌나요?</b>
+                          </Label>
+                          <div className="flex gap-6 mt-1">
+                            <label className="flex items-center gap-1 text-white">
+                              <input
+                                type="radio"
+                                name="grewTaller"
+                                value="yes"
+                                checked={diaryEntry.grewTaller === "yes"}
+                                onChange={handleRadioChange}
+                              />
+                              예
+                            </label>
+                            <label className="flex items-center gap-1 text-white">
+                              <input
+                                type="radio"
+                                name="grewTaller"
+                                value="no"
+                                checked={diaryEntry.grewTaller === "no"}
+                                onChange={handleRadioChange}
+                              />
+                              아니오
+                            </label>
+                            <label className="flex items-center gap-1 text-white">
+                              <input
+                                type="radio"
+                                name="grewTaller"
+                                value="unknown"
+                                checked={diaryEntry.grewTaller === "unknown"}
+                                onChange={handleRadioChange}
+                              />
+                              잘 모르겠어요
+                            </label>
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-white">
+                            식물에 <b>새 잎이 생겼나요?</b>
+                          </Label>
+                          <div className="flex gap-6 mt-1">
+                            <label className="flex items-center gap-1 text-white">
+                              <input
+                                type="radio"
+                                name="newLeaf"
+                                value="yes"
+                                checked={diaryEntry.newLeaf === "yes"}
+                                onChange={handleRadioChange}
+                              />
+                              예
+                            </label>
+                            <label className="flex items-center gap-1 text-white">
+                              <input
+                                type="radio"
+                                name="newLeaf"
+                                value="no"
+                                checked={diaryEntry.newLeaf === "no"}
+                                onChange={handleRadioChange}
+                              />
+                              아니오
+                            </label>
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-white">
+                            식물이 잘 자라고 있는지 나의 느낌을 선택해주세요.
+                          </Label>
+                          <div className="flex gap-6 mt-1">
+                            <button
+                              type="button"
+                              className={`text-3xl px-2 py-1 rounded-full border-2 ${
+                                diaryEntry.feeling === "happy"
+                                  ? "border-yellow-400 bg-yellow-100/10"
+                                  : "border-transparent"
+                              }`}
+                              onClick={() =>
+                                setDiaryEntry((prev) => ({
+                                  ...prev,
+                                  feeling: "happy",
+                                }))
+                              }
+                              aria-label="기쁨"
+                            >
+                              😊
+                            </button>
+                            <button
+                              type="button"
+                              className={`text-3xl px-2 py-1 rounded-full border-2 ${
+                                diaryEntry.feeling === "neutral"
+                                  ? "border-gray-400 bg-gray-100/10"
+                                  : "border-transparent"
+                              }`}
+                              onClick={() =>
+                                setDiaryEntry((prev) => ({
+                                  ...prev,
+                                  feeling: "neutral",
+                                }))
+                              }
+                              aria-label="보통"
+                            >
+                              😐
+                            </button>
+                            <button
+                              type="button"
+                              className={`text-3xl px-2 py-1 rounded-full border-2 ${
+                                diaryEntry.feeling === "sad"
+                                  ? "border-blue-400 bg-blue-100/10"
+                                  : "border-transparent"
+                              }`}
+                              onClick={() =>
+                                setDiaryEntry((prev) => ({
+                                  ...prev,
+                                  feeling: "sad",
+                                }))
+                              }
+                              aria-label="슬픔"
+                            >
+                              😢
+                            </button>
+                          </div>
+                        </div>
+                        <Button
+                          onClick={handleSaveDiary}
+                          className="w-full bg-green-600 hover:bg-green-700 text-white"
+                        >
+                          <Save className="h-4 w-4 mr-2" />
+                          재배일지 저장
+                        </Button>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </ResizablePanel>
@@ -794,7 +398,6 @@ export default function SpecialGrowingPage() {
                             재배일지 기록
                           </h2>
                         </div>
-
                         <ScrollArea className="flex-grow h-[calc(100vh-280px)]">
                           <div className="space-y-4 pr-4">
                             {diaryRecords.length === 0 ? (
@@ -808,9 +411,6 @@ export default function SpecialGrowingPage() {
                                   className="p-4 rounded-lg bg-gray-700/50 border border-gray-600 space-y-2"
                                 >
                                   <div className="flex justify-between items-start">
-                                    <h3 className="text-white font-medium">
-                                      {record.plantName}
-                                    </h3>
                                     <span className="text-xs text-gray-400">
                                       {new Date(
                                         record.createdAt
@@ -818,16 +418,30 @@ export default function SpecialGrowingPage() {
                                     </span>
                                   </div>
                                   <div className="grid grid-cols-2 gap-2 text-sm text-gray-300">
-                                    <p>잎 개수: {record.leafCount}</p>
-                                    <p>길이: {record.plantHeight}</p>
-                                    <p>물 공급량: {record.waterAmount}</p>
-                                    <p>색깔: {record.plantColor}</p>
-                                  </div>
-                                  {record.additionalNotes && (
-                                    <p className="text-sm text-gray-400 mt-2 border-t border-gray-600 pt-2">
-                                      {record.additionalNotes}
+                                    <p>잎 개수: {record.leafCount}장</p>
+                                    <p>
+                                      키가 커졌나요:{" "}
+                                      {record.grewTaller === "yes"
+                                        ? "예"
+                                        : record.grewTaller === "no"
+                                        ? "아니오"
+                                        : "잘 모르겠어요"}
                                     </p>
-                                  )}
+                                    <p>
+                                      새 잎이 생겼나요:{" "}
+                                      {record.newLeaf === "yes"
+                                        ? "예"
+                                        : "아니오"}
+                                    </p>
+                                    <p>
+                                      느낌:{" "}
+                                      {record.feeling === "happy"
+                                        ? "😊"
+                                        : record.feeling === "neutral"
+                                        ? "😐"
+                                        : "😢"}
+                                    </p>
+                                  </div>
                                 </div>
                               ))
                             )}

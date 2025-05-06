@@ -14,7 +14,7 @@ import { getAuth, signOut } from "firebase/auth";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { database } from "@/lib/firebase";
-import { ref, set, get, query, orderByChild, equalTo } from "firebase/database";
+import { ref, set, get } from "firebase/database";
 
 const QUESTIONS = [
   {
@@ -59,16 +59,9 @@ export default function SpecialLearningPage() {
   const [submitSuccess, setSubmitSuccess] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
-  const fetchUidByName = async (name: string) => {
-    const studentsRef = ref(database, "specialStudents");
-    const q = query(studentsRef, orderByChild("name"), equalTo(name));
-    const snapshot = await get(q);
-    let uid = null;
-    snapshot.forEach((child) => {
-      uid = child.val().uid;
-    });
-    return uid;
-  };
+  function getEmailId(email: string) {
+    return email.split("@")[0];
+  }
 
   const fetchSpecialAnswersByUid = async (uid: string) => {
     const answerRef = ref(database, `users/${uid}/specialAnswers`);
@@ -80,31 +73,35 @@ export default function SpecialLearningPage() {
   };
 
   useEffect(() => {
-    const loginName = localStorage.getItem("specialStudentName") || "";
-    if (!loginName) {
+    const user = auth.currentUser;
+    if (!user) {
       setLoading(false);
-      alert("이름 정보가 없습니다. 다시 로그인 해주세요.");
+      alert("로그인이 필요합니다. 다시 로그인 해주세요.");
       router.push("/special-login");
       return;
     }
-    setName(loginName);
+    setUid(user.uid);
 
-    const fetchAnswers = async () => {
+    // 이름이 DB에 저장되어 있다면 가져오기
+    const fetchNameAndAnswers = async () => {
       setLoading(true);
-      const uid = await fetchUidByName(loginName);
-      console.log("찾은 uid:", uid);
-      if (!uid) {
-        setLoading(false);
-        return;
+      const nameRef = ref(database, `specialStudents/${user.uid}/name`);
+      const nameSnap = await get(nameRef);
+      if (nameSnap.exists()) {
+        setName(nameSnap.val());
+      } else {
+        setName(
+          user.displayName ||
+            (user.email ? getEmailId(user.email) : "이름 없음")
+        );
       }
-      setUid(uid);
-      const data = await fetchSpecialAnswersByUid(uid);
+      const data = await fetchSpecialAnswersByUid(user.uid);
       if (data && data.answers) {
         setAnswers(data.answers);
       }
       setLoading(false);
     };
-    fetchAnswers();
+    fetchNameAndAnswers();
   }, []);
 
   const handleLogout = async () => {
@@ -136,9 +133,11 @@ export default function SpecialLearningPage() {
     setSubmitSuccess(null);
     setSubmitError(null);
     try {
+      const user = auth.currentUser;
       const data = {
         name: name,
         uid: uid,
+        email: user?.email || null,
         timestamp: Date.now(),
         answers,
       };

@@ -15,6 +15,8 @@ import {
 } from "recharts";
 import { ChartContainer } from "@/components/ui/chart";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
 
 interface PlantDiary {
   plantHeight: string;
@@ -249,13 +251,18 @@ export default function TeacherDashboard() {
     <ScrollArea className="h-[calc(100vh-4rem)]">
       <div className="space-y-6 p-6">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <div className="bg-gray-800/50 p-6 rounded-xl">
+          <div className="bg-gray-800/50 p-6 rounded-xl flex flex-col items-start relative">
             <h3 className="text-lg font-semibold text-gray-300">
               전체 학생 수
             </h3>
             <p className="text-3xl font-bold text-white mt-2">
               {studentCount}명
             </p>
+            <Link href="/TeacherSpecialDashboard" className="mt-4">
+              <Button variant="secondary" size="sm">
+                특수교육대상자
+              </Button>
+            </Link>
           </div>
           <div className="bg-gray-800/50 p-6 rounded-xl">
             <h3 className="text-lg font-semibold text-gray-300">

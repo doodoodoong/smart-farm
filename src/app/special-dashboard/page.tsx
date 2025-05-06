@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/carousel";
 
 export default function SpecialDashboardPage() {
-  const [name, setName] = useState<string>("");
+  const [email, setEmail] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const router = useRouter();
   const auth = getAuth();
@@ -25,7 +25,7 @@ export default function SpecialDashboardPage() {
         router.push("/special-login");
         return;
       }
-      setName(user.displayName || "특수학생");
+      setEmail(user.email || "");
       setLoading(false);
     });
     return () => unsubscribe();
@@ -49,7 +49,9 @@ export default function SpecialDashboardPage() {
       {/* 헤더 */}
       <header className="bg-gray-800/50 p-4">
         <div className="max-w-7xl mx-auto flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-white">{name}의 관찰 일지</h1>
+          <h1 className="text-2xl font-bold text-white">
+            {email ? `${email.split("@")[0]}의 관찰 일지` : "관찰 일지"}
+          </h1>
           <Button
             onClick={handleLogout}
             variant="outline"
