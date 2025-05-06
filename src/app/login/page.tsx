@@ -173,6 +173,13 @@ export default function LoginPage() {
           Google로 로그인
         </Button>
 
+        <Button
+          onClick={() => router.push("/special-login")}
+          className="w-full mt-4 bg-green-600 hover:bg-green-700 text-white flex items-center justify-center gap-2"
+        >
+          특수교육대상자 로그인
+        </Button>
+
         <p className="mt-4 text-center text-sm text-gray-400">
           계정이 없으신가요?{" "}
           <a
