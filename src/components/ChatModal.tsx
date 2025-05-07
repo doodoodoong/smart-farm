@@ -3,8 +3,13 @@
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { X } from "lucide-react";
 import OpenAI from "openai";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 const openai = new OpenAI({
   apiKey: process.env.NEXT_PUBLIC_OPENAI_API_KEY,
@@ -41,12 +46,12 @@ const ChatModal: React.FC<ChatModalProps> = ({ isOpen, onClose }) => {
 
     try {
       const response = await openai.chat.completions.create({
-        model: "gpt-3.5-turbo",
+        model: "gpt-4.1-mini",
         messages: [
           {
             role: "system",
             content:
-              "당신은 스마트팜 관리를 도와주는 AI 어시스턴트입니다. 농작물 재배와 관리에 대한 전문적인 조언을 제공해주세요.",
+              "당신은 학생들의 식물관찰재배일지 작성 및 식물관찰 과학학습을 도와주는 AI 어시스턴트입니다. 초등학생들이 이해하기 쉽게 이야기해줘야하고 식물 관련 전문 과학지식을 가진 전문가입니다. 학생들이 물어보는 답을 직접적으로 알려주면 안되고 학생들이 스스로 해결할 수 있도록 힌트를 제공해주세요.",
           },
           ...messages.map((msg) => ({
             role: msg.role,
@@ -75,18 +80,12 @@ const ChatModal: React.FC<ChatModalProps> = ({ isOpen, onClose }) => {
     }
   };
 
-  if (!isOpen) return null;
-
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg w-[90%] max-w-[500px] h-[600px] flex flex-col">
-        {/* 헤더 */}
-        <div className="flex justify-between items-center p-4 border-b">
-          <h2 className="text-xl font-semibold">챗봇 도우미</h2>
-          <Button variant="ghost" size="icon" onClick={onClose}>
-            <X className="h-5 w-5" />
-          </Button>
-        </div>
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="w-[90%] max-w-[500px] h-[80vh] p-0 flex flex-col">
+        <DialogHeader className="px-4 py-2 border-b shrink-0">
+          <DialogTitle>챗봇 도우미</DialogTitle>
+        </DialogHeader>
 
         {/* 채팅 메시지 영역 */}
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
@@ -111,7 +110,7 @@ const ChatModal: React.FC<ChatModalProps> = ({ isOpen, onClose }) => {
         </div>
 
         {/* 입력 영역 */}
-        <form onSubmit={handleSubmit} className="p-4 border-t">
+        <form onSubmit={handleSubmit} className="p-4 border-t mt-auto shrink-0">
           <div className="flex gap-2">
             <Input
               value={input}
@@ -125,8 +124,8 @@ const ChatModal: React.FC<ChatModalProps> = ({ isOpen, onClose }) => {
             </Button>
           </div>
         </form>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 };
 
