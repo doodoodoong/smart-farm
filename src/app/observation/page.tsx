@@ -34,12 +34,10 @@ export default function ObservationPage() {
     onValue(observationsRef, (snapshot) => {
       const data = snapshot.val();
       if (data) {
-        const observationList = Object.entries(data).map(
-          ([id, value]: [string, any]) => ({
-            id,
-            ...value,
-          })
-        );
+        const observationList = Object.entries(data).map(([id, value]) => ({
+          id,
+          ...(value as Omit<Observation, "id">),
+        }));
         setObservations(
           observationList.sort((a, b) => b.timestamp - a.timestamp)
         );
