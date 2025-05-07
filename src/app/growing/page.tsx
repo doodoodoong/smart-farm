@@ -43,6 +43,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import ChatbotButton from "@/components/ChatbotButton";
 
 interface PlantInfo {
   plantId: string;
@@ -100,6 +101,7 @@ export default function GrowingPage() {
     temperature: "",
     humidity: "",
   });
+  const [isChatOpen, setIsChatOpen] = useState(false);
 
   const validateNumber = (value: string, min: number, max: number) => {
     const num = Number(value);
@@ -838,6 +840,7 @@ export default function GrowingPage() {
           </div>
         </div>
       </div>
+      <ChatbotButton onClick={() => setIsChatOpen(!isChatOpen)} />
     </ScrollArea>
   );
 }

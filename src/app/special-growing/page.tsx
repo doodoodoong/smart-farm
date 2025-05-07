@@ -16,6 +16,7 @@ import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { useAuth } from "@/components/auth/AuthContext";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import ChatbotButton from "@/components/ChatbotButton";
 
 interface DiaryEntry {
   diaryId: string;
@@ -45,6 +46,7 @@ export default function SpecialGrowingPage() {
     name: "",
   });
   const [diaryRecords, setDiaryRecords] = useState<DiaryEntry[]>([]);
+  const [isChatOpen, setIsChatOpen] = useState(false);
 
   const handleFirebaseError = (error: unknown, context: string) => {
     let errorMessage = `${context} 저장 중 오류가 발생했습니다.`;
@@ -454,6 +456,7 @@ export default function SpecialGrowingPage() {
               </ResizablePanel>
             </ResizablePanelGroup>
           </div>
+          <ChatbotButton onClick={() => setIsChatOpen(!isChatOpen)} />
         </div>
       </div>
     </ScrollArea>

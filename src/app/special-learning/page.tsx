@@ -15,6 +15,7 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { database } from "@/lib/firebase";
 import { ref, set, get } from "firebase/database";
+import ChatbotButton from "@/components/ChatbotButton";
 
 const QUESTIONS = [
   {
@@ -58,6 +59,7 @@ export default function SpecialLearningPage() {
   const [submitLoading, setSubmitLoading] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [isChatOpen, setIsChatOpen] = useState(false);
 
   function getEmailId(email: string) {
     return email.split("@")[0];
@@ -263,6 +265,7 @@ export default function SpecialLearningPage() {
           </CardContent>
         </Card>
       </main>
+      <ChatbotButton onClick={() => setIsChatOpen(!isChatOpen)} />
     </div>
   );
 }

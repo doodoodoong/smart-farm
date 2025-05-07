@@ -12,12 +12,14 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
+import ChatbotButton from "@/components/ChatbotButton";
 
 export default function SpecialDashboardPage() {
   const [email, setEmail] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const router = useRouter();
   const auth = getAuth();
+  const [isChatOpen, setIsChatOpen] = useState(false);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user: User | null) => {
@@ -97,6 +99,7 @@ export default function SpecialDashboardPage() {
               <CarouselNext />
             </Carousel>
           </div>
+          <ChatbotButton onClick={() => setIsChatOpen(!isChatOpen)} />
         </div>
       </main>
     </div>

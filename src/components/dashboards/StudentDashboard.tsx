@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import {
   Carousel,
@@ -8,6 +9,7 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
+import ChatbotButton from "@/components/ChatbotButton";
 
 interface StudentDashboardProps {
   email: string;
@@ -15,6 +17,7 @@ interface StudentDashboardProps {
 
 export default function StudentDashboard({ email }: StudentDashboardProps) {
   const studentName = email === "student1@test.co.kr" ? "학생1" : "학생2";
+  const [isChatOpen, setIsChatOpen] = useState(false);
 
   return (
     <div className="space-y-6">
@@ -50,6 +53,7 @@ export default function StudentDashboard({ email }: StudentDashboardProps) {
           <CarouselNext />
         </Carousel>
       </div>
+      <ChatbotButton onClick={() => setIsChatOpen(!isChatOpen)} />
     </div>
   );
 }

@@ -43,6 +43,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import ChatbotButton from "@/components/ChatbotButton";
 
 interface Answer {
   id?: string;
@@ -386,6 +387,7 @@ function PlantConditionsDialog({
 export default function LearningPage() {
   const router = useRouter();
   const [userEmail, setUserEmail] = React.useState<string>("");
+  const [isChatOpen, setIsChatOpen] = React.useState(false);
 
   React.useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((user: User | null) => {
@@ -456,6 +458,8 @@ export default function LearningPage() {
             </CardContent>
           </Card>
         </div>
+
+        <ChatbotButton onClick={() => setIsChatOpen(!isChatOpen)} />
       </div>
     </div>
   );
