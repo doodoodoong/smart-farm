@@ -102,6 +102,11 @@ export default function GrowingPage() {
     humidity: "",
   });
   const [isChatOpen, setIsChatOpen] = useState(false);
+  const [sensorData, setSensorData] = useState({
+    temperature: null,
+    humidity: null,
+    moisture: null,
+  });
 
   const validateNumber = (value: string, min: number, max: number) => {
     const num = Number(value);
@@ -419,6 +424,32 @@ export default function GrowingPage() {
     };
   }, [user, router, savedPlant]);
 
+  useEffect(() => {
+    let isMounted = true;
+    const fetchSensorData = async () => {
+      try {
+        const res = await fetch("https://myplantcam.ngrok.app/sensor_data");
+        if (!res.ok) return;
+        const data = await res.json();
+        if (isMounted) {
+          setSensorData({
+            temperature: data.temperature,
+            humidity: data.humidity,
+            moisture: data.moisture,
+          });
+        }
+      } catch {
+        // 네트워크 오류 무시 (UI에 표시하지 않음)
+      }
+    };
+    fetchSensorData();
+    const interval = setInterval(fetchSensorData, 2000);
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
+  }, []);
+
   const handleDiaryChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
@@ -612,19 +643,31 @@ export default function GrowingPage() {
                             <span className="text-sm text-gray-400 mr-2">
                               온도
                             </span>
-                            <span className="text-white font-medium">25°C</span>
+                            <span className="text-white font-medium">
+                              {sensorData.temperature !== null
+                                ? `${sensorData.temperature}°C`
+                                : "-"}
+                            </span>
                           </div>
                           <div className="flex items-center">
                             <span className="text-sm text-gray-400 mr-2">
                               습도
                             </span>
-                            <span className="text-white font-medium">60%</span>
+                            <span className="text-white font-medium">
+                              {sensorData.humidity !== null
+                                ? `${sensorData.humidity}%`
+                                : "-"}
+                            </span>
                           </div>
                           <div className="flex items-center">
                             <span className="text-sm text-gray-400 mr-2">
                               토양수분
                             </span>
-                            <span className="text-white font-medium">45%</span>
+                            <span className="text-white font-medium">
+                              {sensorData.moisture !== null
+                                ? `${sensorData.moisture}%`
+                                : "-"}
+                            </span>
                           </div>
                         </div>
                       </div>
