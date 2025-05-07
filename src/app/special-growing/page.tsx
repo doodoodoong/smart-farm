@@ -188,7 +188,7 @@ export default function SpecialGrowingPage() {
                     <div className="p-4 border-b border-gray-700">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center">
-                          <Video className="h-5 w-5 mr-2" />
+                          <Video className="h-5 w-5 mr-2" color="#fff" />
                           <h2 className="text-lg font-semibold text-white">
                             실시간 영상
                           </h2>
@@ -216,11 +216,15 @@ export default function SpecialGrowingPage() {
                       </div>
                     </div>
                     <div className="flex-1 flex items-center justify-center p-4">
-                      <div className="text-center text-gray-400">
-                        <p className="mb-2">
-                          스트리밍 영상이 여기에 표시됩니다
-                        </p>
-                        <p className="text-sm">16:9 비율로 표시될 예정</p>
+                      <div className="w-full h-full overflow-hidden rounded-lg">
+                        <iframe
+                          src="https://myplantcam.ngrok.app/video_feed"
+                          className="w-full h-full"
+                          style={{ border: "none", background: "#222" }}
+                          allow="autoplay; encrypted-media"
+                          allowFullScreen
+                          title="식물 스트리밍 영상"
+                        />
                       </div>
                     </div>
                   </div>
