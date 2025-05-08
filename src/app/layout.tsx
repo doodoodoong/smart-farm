@@ -7,8 +7,13 @@ import { Toaster } from "sonner";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Smart Farm",
-  description: "스마트팜 관리 시스템",
+  title: "Plant Diary",
+  description: "초등학생 식물 관찰 일기",
+  icons: {
+    icon: "/nature.svg",
+    shortcut: "/nature.svg",
+    apple: "/nature.svg",
+  },
 };
 
 export default function RootLayout({
