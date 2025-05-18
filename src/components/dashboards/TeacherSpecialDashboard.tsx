@@ -8,6 +8,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { SPECIAL_STUDENT_NAMES } from "@/lib/types";
 
 const QUESTIONS = [
   {
@@ -228,7 +229,7 @@ export default function TeacherSpecialDashboard() {
               >
                 <CardHeader>
                   <CardTitle className="text-white text-xl">
-                    {student.name}{" "}
+                    {SPECIAL_STUDENT_NAMES[student.email] || student.name}{" "}
                     <span className="text-gray-400 text-base ml-2">
                       ({student.email})
                     </span>

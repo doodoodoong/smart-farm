@@ -20,6 +20,20 @@ export interface PlantRecord {
 export const USER_ROLES: Record<string, UserRole> = {
   "student1@test.co.kr": "student",
   "student2@test.co.kr": "student",
+  "student3@test.co.kr": "student",
+  "student4@test.co.kr": "student",
+  "student5@test.co.kr": "student",
   "teacher1@test.co.kr": "teacher",
   "admin@test.co.kr": "admin",
+};
+
+export const STUDENT_NAMES: Record<string, string> = {
+  "student1@test.co.kr": "김석경",
+  "student2@test.co.kr": "김하준",
+  "student3@test.co.kr": "이성은",
+  "student4@test.co.kr": "주민서",
+};
+
+export const SPECIAL_STUDENT_NAMES: Record<string, string> = {
+  "special@test.co.kr": "정하윤",
 };

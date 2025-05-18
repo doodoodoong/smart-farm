@@ -10,13 +10,14 @@ import {
   CarouselPrevious,
 } from "@/components/ui/carousel";
 import ChatbotButton from "@/components/ChatbotButton";
+import { STUDENT_NAMES } from "@/lib/types";
 
 interface StudentDashboardProps {
   email: string;
 }
 
 export default function StudentDashboard({ email }: StudentDashboardProps) {
-  const studentName = email === "student1@test.co.kr" ? "학생1" : "학생2";
+  const studentName = STUDENT_NAMES[email] || email;
   const [isChatOpen, setIsChatOpen] = useState(false);
 
   return (

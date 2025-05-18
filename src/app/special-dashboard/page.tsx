@@ -13,6 +13,7 @@ import {
   CarouselPrevious,
 } from "@/components/ui/carousel";
 import ChatbotButton from "@/components/ChatbotButton";
+import { SPECIAL_STUDENT_NAMES } from "@/lib/types";
 
 export default function SpecialDashboardPage() {
   const [email, setEmail] = useState<string>("");
@@ -52,7 +53,11 @@ export default function SpecialDashboardPage() {
       <header className="bg-gray-800/50 p-4">
         <div className="max-w-7xl mx-auto flex justify-between items-center">
           <h1 className="text-2xl font-bold text-white">
-            {email ? `${email.split("@")[0]}의 관찰 일지` : "관찰 일지"}
+            {email
+              ? `${
+                  SPECIAL_STUDENT_NAMES[email] ?? email.split("@")[0]
+                }의 관찰 일지`
+              : "관찰 일지"}
           </h1>
           <Button
             onClick={handleLogout}
