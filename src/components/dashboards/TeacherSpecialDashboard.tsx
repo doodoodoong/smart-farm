@@ -94,12 +94,6 @@ export default function TeacherSpecialDashboard() {
               specialDiaries?: Record<string, Record<string, SpecialDiary>>;
               email?: string;
             };
-            // email을 string으로 안전하게 변환
-            const emailRaw =
-              u.specialAnswers?.email || u.specialDiaries?.email || u.email;
-            const email =
-              typeof emailRaw === "string" ? emailRaw : String(emailRaw ?? "");
-            if (!email || email === "undefined" || email === "null") return;
             // 답변
             let answers: SpecialAnswer | undefined = undefined;
             if (u.specialAnswers) {
@@ -114,53 +108,50 @@ export default function TeacherSpecialDashboard() {
             // 일지
             const diaries: SpecialDiary[] = [];
             if (u.specialDiaries) {
-              Object.values(u.specialDiaries).forEach((plantDiaries) => {
-                if (
-                  plantDiaries &&
-                  typeof plantDiaries === "object" &&
-                  !Array.isArray(plantDiaries)
-                ) {
-                  if (
-                    "diaryId" in plantDiaries &&
-                    "createdAt" in plantDiaries
-                  ) {
-                    diaries.push(plantDiaries as unknown as SpecialDiary);
-                  } else if (
-                    typeof plantDiaries === "object" &&
-                    !Array.isArray(plantDiaries) &&
-                    Object.values(
-                      plantDiaries as Record<string, unknown>
-                    ).every(
-                      (d) =>
-                        d &&
-                        typeof d === "object" &&
-                        "diaryId" in d &&
-                        "createdAt" in d
-                    )
-                  ) {
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    Object.values(plantDiaries as any).forEach((diary) => {
-                      diaries.push(diary as SpecialDiary);
-                    });
+              // specialDiaries의 모든 diary를 재귀적으로 수집
+              const collectDiaries = (obj: unknown) => {
+                if (!obj || typeof obj !== "object") return;
+                Object.values(obj).forEach((v) => {
+                  if (v && typeof v === "object") {
+                    if ("diaryId" in v && "createdAt" in v) {
+                      diaries.push(v as SpecialDiary);
+                    } else {
+                      collectDiaries(v);
+                    }
                   }
-                }
-              });
+                });
+              };
+              collectDiaries(u.specialDiaries);
               diaries.sort(
                 (a, b) =>
                   new Date(b.createdAt).getTime() -
                   new Date(a.createdAt).getTime()
               );
             }
-            studentMap[email] = {
-              name:
-                answers?.name ||
-                (Array.isArray(diaries) && diaries.length > 0
-                  ? diaries[0].name
-                  : undefined) ||
-                (typeof email === "string" && email.includes("@")
-                  ? email.split("@")[0]
-                  : email),
-              email,
+            // email 추출: answers > diaries > u.email
+            let email = answers?.email;
+            if (!email && diaries.length > 0) {
+              email = diaries[0].email;
+            }
+            if (!email && typeof u.email === "string") {
+              email = u.email;
+            }
+            if (!email || email === "undefined" || email === "null") return;
+            // name 추출: answers > diaries > email 앞부분
+            let name = answers?.name;
+            if (!name && diaries.length > 0) {
+              name =
+                diaries[0].name ||
+                (diaries[0].email && diaries[0].email.split("@")[0]) ||
+                "";
+            }
+            if (!name && typeof email === "string" && email.includes("@")) {
+              name = email.split("@")[0];
+            }
+            // name, email이 string임을 보장
+            studentMap[email as string] = {
+              name: name as string,
+              email: email as string,
               answers,
               diaries: Array.isArray(diaries) ? diaries : [],
             };
@@ -292,9 +283,9 @@ export default function TeacherSpecialDashboard() {
                             className="bg-gray-700/40 rounded-lg p-4"
                           >
                             <div className="flex flex-wrap gap-4 mb-2">
-                              <span className="text-white font-medium">
+                              {/* <span className="text-white font-medium">
                                 식물ID: {diary.plantId}
-                              </span>
+                              </span> */}
                               <span className="text-white">
                                 잎 수: {diary.leafCount}
                               </span>
