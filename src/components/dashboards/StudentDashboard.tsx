@@ -4,8 +4,6 @@ import { useState } from "react";
 import ChatbotButton from "@/components/ChatbotButton";
 import { STUDENT_NAMES } from "@/lib/types";
 import FlowingMenu from "@/blocks/Components/FlowingMenu/FlowingMenu";
-import Ballpit from "@/blocks/Backgrounds/Ballpit/Ballpit";
-
 interface StudentDashboardProps {
   email: string;
 }
@@ -38,18 +36,7 @@ export default function StudentDashboard({ email }: StudentDashboardProps) {
           zIndex: 10,
           pointerEvents: "none",
         }}
-      >
-        <Ballpit
-          count={100}
-          gravity={0.7}
-          friction={0.9975}
-          wallBounce={0.95}
-          followCursor={false}
-          color={[16711680, 65280, 255]}
-          ambientColor={16777215}
-          ambientIntensity={0.5}
-        />
-      </div>
+      ></div>
       <div>
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-bold text-white">
