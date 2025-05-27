@@ -6,6 +6,7 @@ import Link from "next/link";
 import { auth } from "@/lib/firebase";
 import { signInWithEmailAndPassword, AuthError } from "firebase/auth";
 import { useRouter } from "next/navigation";
+import SplashCursor from "@/blocks/Animations/SplashCursor/SplashCursor";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -43,6 +44,7 @@ export default function LoginPage() {
 
   return (
     <main className="relative min-h-screen flex flex-col items-center justify-center p-8 overflow-hidden">
+      <SplashCursor />
       <video
         className="absolute top-0 left-0 w-full h-full object-cover z-0"
         src="/plantgrowth.mp4"

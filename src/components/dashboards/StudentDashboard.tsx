@@ -19,6 +19,10 @@ interface StudentDashboardProps {
 export default function StudentDashboard({ email }: StudentDashboardProps) {
   const studentName = STUDENT_NAMES[email] || email;
   const [isChatOpen, setIsChatOpen] = useState(false);
+  const flowingItems = [
+    {link: '#', text: 'Mojave', image: 'https://picsum.photos/600/400?random-1' },
+    {link: '#', text: 'Sonoma', image: 'https://picsum.photos/600/400?random=2'}
+  ]
 
   return (
     <div className="space-y-6">
@@ -29,6 +33,8 @@ export default function StudentDashboard({ email }: StudentDashboardProps) {
       </div>
 
       <div className="w-full max-w-4xl mx-auto">
+        <div style={{height: '600px', position: 'relative'}}>
+          <flowing
         <Carousel>
           <CarouselContent>
             <CarouselItem className="basis-full">

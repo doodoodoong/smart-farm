@@ -1,3 +1,5 @@
+import GradientText from "@/blocks/TextAnimations/GradientText/GradientText";
+import RotatingText from "@/blocks/TextAnimations/RotatingText/RotatingText";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 
@@ -15,10 +17,31 @@ export default function Home() {
       />
       {/* 내용 */}
       <div className="relative z-10 max-w-4xl w-full space-y-8 text-center">
-        <h1 className="text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-500">
-          스마트 식물재배 관찰일지
+        <h1 className="text-5xl font-extrabold bg-clip-text">
+          <GradientText
+            colors={["#40ffaa", "#4079ff", "#40ffaa", "#4079ff", "#40ffaa"]}
+            animationSpeed={4}
+            showBorder={false}
+            className="custom-class"
+          >
+            스마트 식물재배 관찰일지
+          </GradientText>
         </h1>
-        <p className="text-xl text-gray-300 mt-4">자세히 보고 기록합시다</p>
+        <div className="text-xl mt-4 flex items-center justify-center gap-2">
+          <span className="text-gray-300 text-2xl font-bold">식물 관찰은</span>
+          <RotatingText
+            texts={["쉽다", "할 수 있다", "신기하다", "귀찮지 않다"]}
+            mainClassName="px-2 sm:px-2 md:px-3 bg-cyan-300 text-black font-bold overflow-hidden py-0.5 sm:py-1 md:py-2 justify-center rounded-lg"
+            staggerFrom={"last"}
+            initial={{ y: "100%" }}
+            animate={{ y: 0 }}
+            exit={{ y: "-120%" }}
+            staggerDuration={0.025}
+            splitLevelClassName="overflow-hidden pb-0.5 sm:pb-1 md:pb-1"
+            transition={{ type: "spring", damping: 30, stiffness: 400 }}
+            rotationInterval={2000}
+          />
+        </div>
         <div className="flex gap-4 justify-center mt-8">
           <Link href="/login">
             <Button className="bg-blue-500 hover:bg-blue-600 text-white px-8 py-2 rounded-lg text-lg">
