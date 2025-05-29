@@ -8,7 +8,6 @@ import { useRouter } from "next/navigation";
 import { getAuth, signInWithEmailAndPassword } from "firebase/auth";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
-import SplashCursor from "@/blocks/Animations/SplashCursor/SplashCursor";
 
 export default function SpecialLoginPage() {
   const [name, setName] = useState("");
@@ -49,7 +48,6 @@ export default function SpecialLoginPage() {
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 flex flex-col items-center justify-center p-8">
-      <SplashCursor />
       <div className="absolute top-4 left-4">
         <Link href="/login">
           <Button

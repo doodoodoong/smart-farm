@@ -39,7 +39,7 @@ export default function Home() {
             staggerDuration={0.025}
             splitLevelClassName="overflow-hidden pb-0.5 sm:pb-1 md:pb-1"
             transition={{ type: "spring", damping: 30, stiffness: 400 }}
-            rotationInterval={2000}
+            rotationInterval={1500}
           />
         </div>
         <div className="flex gap-4 justify-center mt-8">
