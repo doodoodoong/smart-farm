@@ -1,7 +1,15 @@
+"use client";
 import GradientText from "@/blocks/TextAnimations/GradientText/GradientText";
 import RotatingText from "@/blocks/TextAnimations/RotatingText/RotatingText";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { Volume2 } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 export default function Home() {
   return (
@@ -49,6 +57,40 @@ export default function Home() {
             </Button>
           </Link>
         </div>
+        {/* 읽어주기 버튼 - 오른쪽 하단 고정, 원형, Tooltip */}
+        <TooltipProvider>
+          <div className="fixed bottom-6 right-24 z-50">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  className="rounded-full w-14 h-14 bg-green-500 hover:bg-white hover:text-green-500 transition-colors duration-200 shadow-lg flex items-center justify-center"
+                  size="lg"
+                  onClick={async () => {
+                    const text = "스마트 식물재배 관찰일지";
+                    const res = await fetch("/api/tts", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ text }),
+                    });
+                    if (res.ok) {
+                      const blob = await res.blob();
+                      const url = URL.createObjectURL(blob);
+                      const audio = new Audio(url);
+                      audio.play();
+                    } else {
+                      alert("음성 생성에 실패했습니다.");
+                    }
+                  }}
+                >
+                  <Volume2 className="w-6 h-6" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent className="bg-gray-800 text-white border-gray-700">
+                <p>이 페이지를 음성으로 듣기</p>
+              </TooltipContent>
+            </Tooltip>
+          </div>
+        </TooltipProvider>
       </div>
       {/* 배경 그라데이션 오버레이(필요시) */}
       <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-gray-900/70 to-gray-800/80 z-5 pointer-events-none" />
