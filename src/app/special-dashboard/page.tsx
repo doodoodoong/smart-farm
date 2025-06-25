@@ -11,9 +11,17 @@ import {
   CarouselItem,
   CarouselNext,
   CarouselPrevious,
+  CarouselApi,
 } from "@/components/ui/carousel";
 import ChatbotButton from "@/components/ChatbotButton";
 import { SPECIAL_STUDENT_NAMES } from "@/lib/types";
+import { Volume2 } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 export default function SpecialDashboardPage() {
   const [email, setEmail] = useState<string>("");
@@ -21,6 +29,8 @@ export default function SpecialDashboardPage() {
   const router = useRouter();
   const auth = getAuth();
   const [isChatOpen, setIsChatOpen] = useState(false);
+  const [carouselApi, setCarouselApi] = useState<CarouselApi | null>(null);
+  const [currentIndex, setCurrentIndex] = useState(0);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user: User | null) => {
@@ -33,6 +43,19 @@ export default function SpecialDashboardPage() {
     });
     return () => unsubscribe();
   }, [auth, router]);
+
+  useEffect(() => {
+    if (!carouselApi) return;
+    const onSelect = () => {
+      setCurrentIndex(carouselApi.selectedScrollSnap());
+    };
+    carouselApi.on("select", onSelect);
+    // 초기값 설정
+    setCurrentIndex(carouselApi.selectedScrollSnap());
+    return () => {
+      carouselApi.off("select", onSelect);
+    };
+  }, [carouselApi]);
 
   const handleLogout = async () => {
     try {
@@ -73,7 +96,7 @@ export default function SpecialDashboardPage() {
       <main className="max-w-7xl mx-auto p-6">
         <div className="space-y-6">
           <div className="w-full max-w-4xl mx-auto">
-            <Carousel>
+            <Carousel setApi={setCarouselApi}>
               <CarouselContent>
                 <CarouselItem className="basis-full">
                   <Link
@@ -107,6 +130,54 @@ export default function SpecialDashboardPage() {
           <ChatbotButton onClick={() => setIsChatOpen(!isChatOpen)} />
         </div>
       </main>
+
+      {/* 읽어주기 버튼 - 오른쪽 하단 고정, 원형, Tooltip */}
+      <TooltipProvider>
+        <div className="fixed bottom-6 right-24 z-50">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                className="rounded-full w-14 h-14 bg-green-500 hover:bg-white hover:text-green-500 transition-colors duration-200 shadow-lg flex items-center justify-center"
+                size="lg"
+                onClick={async () => {
+                  const baseText =
+                    "특수교육대상자 대시보드입니다. 상단에는 로그아웃 버튼이 있습니다. 궁금한 점이 있으면 오른쪽 하단의 챗봇 버튼을 눌러 질문할 수 있습니다.";
+                  let text = "";
+                  if (currentIndex === 0) {
+                    text =
+                      "지금까지 배운 내용 확인하기 카드가 선택되어 있습니다. 이 카드를 누르면 학습 내용을 복습할 수 있습니다. " +
+                      baseText;
+                  } else if (currentIndex === 1) {
+                    text =
+                      "식물을 정해 키워보기 카드가 선택되어 있습니다. 이 카드를 누르면 식물 키우기 활동을 시작할 수 있습니다. " +
+                      baseText;
+                  } else {
+                    text = baseText;
+                  }
+                  const res = await fetch("/api/tts", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ text }),
+                  });
+                  if (res.ok) {
+                    const blob = await res.blob();
+                    const url = URL.createObjectURL(blob);
+                    const audio = new Audio(url);
+                    audio.play();
+                  } else {
+                    alert("음성 생성에 실패했습니다.");
+                  }
+                }}
+              >
+                <Volume2 className="w-6 h-6" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent className="bg-gray-800 text-white border-gray-700">
+              <p>대시보드 안내 음성 듣기</p>
+            </TooltipContent>
+          </Tooltip>
+        </div>
+      </TooltipProvider>
     </div>
   );
 }

@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Video, Save } from "lucide-react";
+import { ArrowLeft, Video, Save, Volume2 } from "lucide-react";
 import {
   ResizableHandle,
   ResizablePanel,
@@ -17,6 +17,12 @@ import { toast } from "sonner";
 import { useAuth } from "@/components/auth/AuthContext";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import ChatbotButton from "@/components/ChatbotButton";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface DiaryEntry {
   diaryId: string;
@@ -206,8 +212,42 @@ export default function SpecialGrowingPage() {
               <ArrowLeft className="h-5 w-5 mr-2" />
               돌아가기
             </Button>
+            <h1 className="text-2xl font-bold text-white mb-0 ml-4 flex items-center gap-2">
+              식물 키우기
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      className="rounded-full w-10 h-10 bg-green-500 hover:bg-white hover:text-green-500 transition-colors duration-200 shadow-lg flex items-center justify-center ml-2"
+                      size="icon"
+                      onClick={async () => {
+                        const text =
+                          "식물 키우기 페이지입니다. 각 문항과 답변 옆의 스피커 버튼을 누르면 음성 안내를 들을 수 있습니다.";
+                        const res = await fetch("/api/tts", {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ text }),
+                        });
+                        if (res.ok) {
+                          const blob = await res.blob();
+                          const url = URL.createObjectURL(blob);
+                          const audio = new Audio(url);
+                          audio.play();
+                        } else {
+                          alert("음성 생성에 실패했습니다.");
+                        }
+                      }}
+                    >
+                      <Volume2 className="w-5 h-5" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent className="bg-gray-800 text-white border-gray-700">
+                    <p>전체 안내 음성 듣기</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </h1>
           </div>
-          <h1 className="text-2xl font-bold text-white mb-8">식물 키우기</h1>
           <div className="flex-1 -mx-6">
             <ResizablePanelGroup
               direction="horizontal"
@@ -285,8 +325,44 @@ export default function SpecialGrowingPage() {
                       </div>
                       <div className="space-y-6">
                         <div className="space-y-2">
-                          <Label htmlFor="leafCount" className="text-white">
+                          <Label
+                            htmlFor="leafCount"
+                            className="text-white flex items-center gap-2"
+                          >
                             잎이 몇 장 있나요?
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    className="rounded-full w-8 h-8 bg-green-500 hover:bg-white hover:text-green-500 transition-colors duration-200 shadow flex items-center justify-center ml-1"
+                                    size="icon"
+                                    onClick={async () => {
+                                      const text = "잎이 몇 장 있나요?";
+                                      const res = await fetch("/api/tts", {
+                                        method: "POST",
+                                        headers: {
+                                          "Content-Type": "application/json",
+                                        },
+                                        body: JSON.stringify({ text }),
+                                      });
+                                      if (res.ok) {
+                                        const blob = await res.blob();
+                                        const url = URL.createObjectURL(blob);
+                                        const audio = new Audio(url);
+                                        audio.play();
+                                      } else {
+                                        alert("음성 생성에 실패했습니다.");
+                                      }
+                                    }}
+                                  >
+                                    <Volume2 className="w-4 h-4" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent className="bg-gray-800 text-white border-gray-700">
+                                  <p>문항 읽어주기</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
                           </Label>
                           <div className="flex items-center gap-2">
                             <Input
@@ -303,67 +379,106 @@ export default function SpecialGrowingPage() {
                           </div>
                         </div>
                         <div className="space-y-2">
-                          <Label className="text-white">
+                          <Label className="text-white flex items-center gap-2">
                             오늘 식물의 키가 전보다 <b>커졌나요?</b>
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    className="rounded-full w-8 h-8 bg-green-500 hover:bg-white hover:text-green-500 transition-colors duration-200 shadow flex items-center justify-center ml-1"
+                                    size="icon"
+                                    onClick={async () => {
+                                      const text =
+                                        "오늘 식물의 키가 전보다 커졌나요?";
+                                      const res = await fetch("/api/tts", {
+                                        method: "POST",
+                                        headers: {
+                                          "Content-Type": "application/json",
+                                        },
+                                        body: JSON.stringify({ text }),
+                                      });
+                                      if (res.ok) {
+                                        const blob = await res.blob();
+                                        const url = URL.createObjectURL(blob);
+                                        const audio = new Audio(url);
+                                        audio.play();
+                                      } else {
+                                        alert("음성 생성에 실패했습니다.");
+                                      }
+                                    }}
+                                  >
+                                    <Volume2 className="w-4 h-4" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent className="bg-gray-800 text-white border-gray-700">
+                                  <p>문항 읽어주기</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
                           </Label>
                           <div className="flex gap-6 mt-1">
-                            <label className="flex items-center gap-1 text-white">
-                              <input
-                                type="radio"
-                                name="grewTaller"
-                                value="yes"
-                                checked={diaryEntry.grewTaller === "yes"}
-                                onChange={handleRadioChange}
-                              />
-                              예
-                            </label>
-                            <label className="flex items-center gap-1 text-white">
-                              <input
-                                type="radio"
-                                name="grewTaller"
-                                value="no"
-                                checked={diaryEntry.grewTaller === "no"}
-                                onChange={handleRadioChange}
-                              />
-                              아니오
-                            </label>
-                            <label className="flex items-center gap-1 text-white">
-                              <input
-                                type="radio"
-                                name="grewTaller"
-                                value="unknown"
-                                checked={diaryEntry.grewTaller === "unknown"}
-                                onChange={handleRadioChange}
-                              />
-                              잘 모르겠어요
-                            </label>
-                          </div>
-                        </div>
-                        <div className="space-y-2">
-                          <Label className="text-white">
-                            식물에 <b>새 잎이 생겼나요?</b>
-                          </Label>
-                          <div className="flex gap-6 mt-1">
-                            <label className="flex items-center gap-1 text-white">
-                              <input
-                                type="radio"
-                                name="newLeaf"
-                                value="yes"
-                                checked={diaryEntry.newLeaf === "yes"}
-                                onChange={handleRadioChange}
-                              />
-                              예
-                            </label>
-                            <label className="flex items-center gap-1 text-white">
-                              <input
-                                type="radio"
-                                name="newLeaf"
-                                value="no"
-                                checked={diaryEntry.newLeaf === "no"}
-                                onChange={handleRadioChange}
-                              />
-                              아니오
-                            </label>
+                            {["예", "아니오", "잘 모르겠어요"].map(
+                              (opt, idx) => (
+                                <label
+                                  key={opt}
+                                  className="flex items-center gap-1 text-white"
+                                >
+                                  <input
+                                    type="radio"
+                                    name="grewTaller"
+                                    value={["yes", "no", "unknown"][idx]}
+                                    checked={
+                                      diaryEntry.grewTaller ===
+                                      ["yes", "no", "unknown"][idx]
+                                    }
+                                    onChange={handleRadioChange}
+                                  />
+                                  {opt}
+                                  <TooltipProvider>
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <Button
+                                          className="rounded-full w-7 h-7 bg-green-500 hover:bg-white hover:text-green-500 transition-colors duration-200 shadow flex items-center justify-center ml-1"
+                                          size="icon"
+                                          tabIndex={-1}
+                                          onClick={async (e) => {
+                                            e.stopPropagation();
+                                            const text = opt;
+                                            const res = await fetch(
+                                              "/api/tts",
+                                              {
+                                                method: "POST",
+                                                headers: {
+                                                  "Content-Type":
+                                                    "application/json",
+                                                },
+                                                body: JSON.stringify({ text }),
+                                              }
+                                            );
+                                            if (res.ok) {
+                                              const blob = await res.blob();
+                                              const url =
+                                                URL.createObjectURL(blob);
+                                              const audio = new Audio(url);
+                                              audio.play();
+                                            } else {
+                                              alert(
+                                                "음성 생성에 실패했습니다."
+                                              );
+                                            }
+                                          }}
+                                        >
+                                          <Volume2 className="w-4 h-4" />
+                                        </Button>
+                                      </TooltipTrigger>
+                                      <TooltipContent className="bg-gray-800 text-white border-gray-700">
+                                        <p>이 답변 읽어주기</p>
+                                      </TooltipContent>
+                                    </Tooltip>
+                                  </TooltipProvider>
+                                </label>
+                              )
+                            )}
                           </div>
                         </div>
                         <div className="space-y-2">
@@ -423,6 +538,40 @@ export default function SpecialGrowingPage() {
                               😢
                             </button>
                           </div>
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  className="rounded-full w-8 h-8 bg-green-500 hover:bg-white hover:text-green-500 transition-colors duration-200 shadow flex items-center justify-center ml-1"
+                                  size="icon"
+                                  onClick={async () => {
+                                    const text =
+                                      "식물이 잘 자라고 있는지 나의 느낌을 선택해주세요.";
+                                    const res = await fetch("/api/tts", {
+                                      method: "POST",
+                                      headers: {
+                                        "Content-Type": "application/json",
+                                      },
+                                      body: JSON.stringify({ text }),
+                                    });
+                                    if (res.ok) {
+                                      const blob = await res.blob();
+                                      const url = URL.createObjectURL(blob);
+                                      const audio = new Audio(url);
+                                      audio.play();
+                                    } else {
+                                      alert("음성 생성에 실패했습니다.");
+                                    }
+                                  }}
+                                >
+                                  <Volume2 className="w-4 h-4" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent className="bg-gray-800 text-white border-gray-700">
+                                <p>문항 읽어주기</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
                         </div>
                         <Button
                           onClick={handleSaveDiary}
@@ -465,6 +614,66 @@ export default function SpecialGrowingPage() {
                                         record.createdAt
                                       ).toLocaleString()}
                                     </span>
+                                    <TooltipProvider>
+                                      <Tooltip>
+                                        <TooltipTrigger asChild>
+                                          <Button
+                                            className="rounded-full w-7 h-7 bg-green-500 hover:bg-white hover:text-green-500 transition-colors duration-200 shadow flex items-center justify-center ml-1"
+                                            size="icon"
+                                            onClick={async () => {
+                                              const text = `잎 개수: ${
+                                                record.leafCount
+                                              }장, 키가 커졌나요: ${
+                                                record.grewTaller === "yes"
+                                                  ? "예"
+                                                  : record.grewTaller === "no"
+                                                  ? "아니오"
+                                                  : "잘 모르겠어요"
+                                              }, 새 잎이 생겼나요: ${
+                                                record.newLeaf === "yes"
+                                                  ? "예"
+                                                  : "아니오"
+                                              }, 느낌: ${
+                                                record.feeling === "happy"
+                                                  ? "기쁨"
+                                                  : record.feeling === "neutral"
+                                                  ? "보통"
+                                                  : "슬픔"
+                                              }`;
+                                              const res = await fetch(
+                                                "/api/tts",
+                                                {
+                                                  method: "POST",
+                                                  headers: {
+                                                    "Content-Type":
+                                                      "application/json",
+                                                  },
+                                                  body: JSON.stringify({
+                                                    text,
+                                                  }),
+                                                }
+                                              );
+                                              if (res.ok) {
+                                                const blob = await res.blob();
+                                                const url =
+                                                  URL.createObjectURL(blob);
+                                                const audio = new Audio(url);
+                                                audio.play();
+                                              } else {
+                                                alert(
+                                                  "음성 생성에 실패했습니다."
+                                                );
+                                              }
+                                            }}
+                                          >
+                                            <Volume2 className="w-4 h-4" />
+                                          </Button>
+                                        </TooltipTrigger>
+                                        <TooltipContent className="bg-gray-800 text-white border-gray-700">
+                                          <p>이 기록 읽어주기</p>
+                                        </TooltipContent>
+                                      </Tooltip>
+                                    </TooltipProvider>
                                   </div>
                                   <div className="grid grid-cols-2 gap-2 text-sm text-gray-300">
                                     <p>잎 개수: {record.leafCount}장</p>

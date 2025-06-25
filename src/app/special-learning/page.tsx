@@ -12,10 +12,16 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { useRouter } from "next/navigation";
 import { getAuth, signOut } from "firebase/auth";
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Volume2 } from "lucide-react";
 import { database } from "@/lib/firebase";
 import { ref, set, get } from "firebase/database";
 import ChatbotButton from "@/components/ChatbotButton";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 const QUESTIONS = [
   {
@@ -183,18 +189,87 @@ export default function SpecialLearningPage() {
       <main className="max-w-7xl mx-auto p-6 flex items-center justify-center">
         <Card className="w-full max-w-2xl bg-gray-800/50 border-0 shadow-xl">
           <CardHeader>
-            <CardTitle className="text-white">식물의 구조와 성장</CardTitle>
-            <CardDescription className="text-gray-400">
-              아래 문항에 답해보세요. (체크박스 선택)
-            </CardDescription>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="text-white">식물의 구조와 성장</CardTitle>
+                <CardDescription className="text-gray-400">
+                  아래 문항에 답해보세요. (체크박스 선택)
+                </CardDescription>
+              </div>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      className="rounded-full w-10 h-10 bg-green-500 hover:bg-white hover:text-green-500 transition-colors duration-200 shadow-lg flex items-center justify-center ml-2"
+                      size="icon"
+                      onClick={async () => {
+                        const text =
+                          "식물의 구조와 성장. 아래 문항에 답해보세요. 각 문항 옆의 스피커 버튼을 누르면 문항을 음성으로 들을 수 있습니다.";
+                        const res = await fetch("/api/tts", {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ text }),
+                        });
+                        if (res.ok) {
+                          const blob = await res.blob();
+                          const url = URL.createObjectURL(blob);
+                          const audio = new Audio(url);
+                          audio.play();
+                        } else {
+                          alert("음성 생성에 실패했습니다.");
+                        }
+                      }}
+                    >
+                      <Volume2 className="w-5 h-5" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent className="bg-gray-800 text-white border-gray-700">
+                    <p>전체 안내 음성 듣기</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
           </CardHeader>
           <CardContent>
             <ScrollArea className="max-h-[70vh] pr-2">
               <div className="space-y-8">
                 {QUESTIONS.map((q, qIdx) => (
                   <div key={qIdx} className="space-y-3">
-                    <div className="font-semibold text-base text-white mb-1">
+                    <div className="font-semibold text-base text-white mb-1 flex items-center gap-2">
                       {q.question}
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              className="rounded-full w-8 h-8 bg-green-500 hover:bg-white hover:text-green-500 transition-colors duration-200 shadow flex items-center justify-center ml-1"
+                              size="icon"
+                              onClick={async () => {
+                                const text = q.question;
+                                const res = await fetch("/api/tts", {
+                                  method: "POST",
+                                  headers: {
+                                    "Content-Type": "application/json",
+                                  },
+                                  body: JSON.stringify({ text }),
+                                });
+                                if (res.ok) {
+                                  const blob = await res.blob();
+                                  const url = URL.createObjectURL(blob);
+                                  const audio = new Audio(url);
+                                  audio.play();
+                                } else {
+                                  alert("음성 생성에 실패했습니다.");
+                                }
+                              }}
+                            >
+                              <Volume2 className="w-4 h-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent className="bg-gray-800 text-white border-gray-700">
+                            <p>문항 읽어주기</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
                     </div>
                     <div className="flex flex-wrap gap-4">
                       {q.options.map((opt, oIdx) => (
@@ -209,6 +284,41 @@ export default function SpecialLearningPage() {
                             className="accent-green-500 w-5 h-5"
                           />
                           <span>{opt}</span>
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  className="rounded-full w-7 h-7 bg-green-500 hover:bg-white hover:text-green-500 transition-colors duration-200 shadow flex items-center justify-center ml-1"
+                                  size="icon"
+                                  tabIndex={-1}
+                                  onClick={async (e) => {
+                                    e.stopPropagation();
+                                    const text = opt;
+                                    const res = await fetch("/api/tts", {
+                                      method: "POST",
+                                      headers: {
+                                        "Content-Type": "application/json",
+                                      },
+                                      body: JSON.stringify({ text }),
+                                    });
+                                    if (res.ok) {
+                                      const blob = await res.blob();
+                                      const url = URL.createObjectURL(blob);
+                                      const audio = new Audio(url);
+                                      audio.play();
+                                    } else {
+                                      alert("음성 생성에 실패했습니다.");
+                                    }
+                                  }}
+                                >
+                                  <Volume2 className="w-4 h-4" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent className="bg-gray-800 text-white border-gray-700">
+                                <p>이 답변 읽어주기</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
                         </label>
                       ))}
                     </div>
@@ -237,8 +347,52 @@ export default function SpecialLearningPage() {
               <ol className="space-y-4">
                 {QUESTIONS.map((q, qIdx) => (
                   <li key={qIdx}>
-                    <div className="text-white font-medium mb-1">
+                    <div className="text-white font-medium mb-1 flex items-center gap-2">
                       {q.question}
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              className="rounded-full w-7 h-7 bg-green-500 hover:bg-white hover:text-green-500 transition-colors duration-200 shadow flex items-center justify-center ml-1"
+                              size="icon"
+                              onClick={async () => {
+                                let answerText = "";
+                                if (
+                                  answers[qIdx] &&
+                                  answers[qIdx].some(Boolean)
+                                ) {
+                                  answerText = q.options
+                                    .filter((_, oIdx) => answers[qIdx]?.[oIdx])
+                                    .join(", ");
+                                } else {
+                                  answerText = "선택 없음";
+                                }
+                                const text = `${q.question} 답변: ${answerText}`;
+                                const res = await fetch("/api/tts", {
+                                  method: "POST",
+                                  headers: {
+                                    "Content-Type": "application/json",
+                                  },
+                                  body: JSON.stringify({ text }),
+                                });
+                                if (res.ok) {
+                                  const blob = await res.blob();
+                                  const url = URL.createObjectURL(blob);
+                                  const audio = new Audio(url);
+                                  audio.play();
+                                } else {
+                                  alert("음성 생성에 실패했습니다.");
+                                }
+                              }}
+                            >
+                              <Volume2 className="w-4 h-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent className="bg-gray-800 text-white border-gray-700">
+                            <p>답변 읽어주기</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
                     </div>
                     <ul className="flex flex-wrap gap-2">
                       {q.options.map((opt, oIdx) =>
