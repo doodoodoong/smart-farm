@@ -44,6 +44,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import ChatbotButton from "@/components/ChatbotButton";
+import VideoModalButton from "@/components/VideoModalButton";
 
 interface Answer {
   id?: string;
@@ -460,6 +461,7 @@ export default function LearningPage() {
         </div>
 
         <ChatbotButton onClick={() => setIsChatOpen(!isChatOpen)} />
+        <VideoModalButton />
       </div>
     </div>
   );

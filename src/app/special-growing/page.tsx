@@ -23,6 +23,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import VideoModalButton from "@/components/VideoModalButton";
 
 interface DiaryEntry {
   diaryId: string;
@@ -713,6 +714,7 @@ export default function SpecialGrowingPage() {
             </ResizablePanelGroup>
           </div>
           <ChatbotButton onClick={() => setIsChatOpen(!isChatOpen)} />
+          <VideoModalButton />
         </div>
       </div>
     </ScrollArea>
