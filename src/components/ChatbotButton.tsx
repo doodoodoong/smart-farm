@@ -13,9 +13,13 @@ import ChatModal from "./ChatModal";
 
 interface ChatbotButtonProps {
   onClick?: () => void;
+  fixed?: boolean;
 }
 
-const ChatbotButton: React.FC<ChatbotButtonProps> = ({ onClick }) => {
+const ChatbotButton: React.FC<ChatbotButtonProps> = ({
+  onClick,
+  fixed = true,
+}) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const handleClick = () => {
@@ -25,7 +29,7 @@ const ChatbotButton: React.FC<ChatbotButtonProps> = ({ onClick }) => {
 
   return (
     <>
-      <div className="fixed bottom-6 right-6 z-50">
+      <div className={fixed ? "fixed bottom-6 right-6 z-50" : "z-50"}>
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>

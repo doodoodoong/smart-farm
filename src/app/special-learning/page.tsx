@@ -22,6 +22,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import VideoModalButton from "@/components/VideoModalButton";
 
 const QUESTIONS = [
   {
@@ -420,6 +421,7 @@ export default function SpecialLearningPage() {
         </Card>
       </main>
       <ChatbotButton onClick={() => setIsChatOpen(!isChatOpen)} />
+      <VideoModalButton />
     </div>
   );
 }
