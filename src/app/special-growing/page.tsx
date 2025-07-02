@@ -17,6 +17,62 @@ import { toast } from "sonner";
 import { useAuth } from "@/components/auth/AuthContext";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import ChatbotButton from "@/components/ChatbotButton";
+import { getPlantImageUrl } from "@/lib/plantImageFirebase";
+import { analyzePlantAll } from "@/lib/plantIdApi";
+import { PlantIdApiResponse } from "@/lib/types";
+import {
+  Dialog,
+  DialogTrigger,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+
+interface IdentifyResult {
+  id: number;
+  custom_id: string | null;
+  meta_data: {
+    latitude: number | null;
+    longitude: number | null;
+    date: string;
+    datetime: string;
+  };
+  uploaded_datetime: number;
+  finished_datetime: number;
+  images: Array<{
+    file_name: string;
+    url: string;
+  }>;
+  suggestions: Array<{
+    id: number;
+    plant_name: string;
+    probability: number;
+    confirmed: boolean;
+    plant_details: {
+      language: string;
+      scientific_name: string;
+      structured_name: {
+        genus: string;
+        species: string;
+      };
+    };
+  }>;
+  modifiers: string[];
+  secret: string;
+  fail_cause: string | null;
+  countable: boolean;
+  feedback: unknown;
+  is_plant: boolean;
+  is_plant_probability: number;
+  health_assessment?: {
+    is_healthy: boolean;
+    diseases: Array<{
+      name: string;
+      probability: number;
+    }>;
+  };
+}
 
 interface DiaryEntry {
   diaryId: string;
@@ -52,6 +108,16 @@ export default function SpecialGrowingPage() {
     humidity: null,
     moisture: null,
   });
+  const [analyzeLoading, setAnalyzeLoading] = useState(false);
+  const [analyzeError, setAnalyzeError] = useState<string | null>(null);
+  const [speciesResult, setSpeciesResult] = useState<IdentifyResult | null>(
+    null
+  );
+  const [healthResult, setHealthResult] = useState<PlantIdApiResponse | null>(
+    null
+  );
+  const [analyzeDialogOpen, setAnalyzeDialogOpen] = useState(false);
+  const sampleImagePath = "plantcam/daily.jpg";
 
   const handleFirebaseError = (error: unknown, context: string) => {
     let errorMessage = `${context} 저장 중 오류가 발생했습니다.`;
@@ -193,6 +259,124 @@ export default function SpecialGrowingPage() {
     }));
   };
 
+  // 분석 결과 렌더링 함수
+  const renderAnalyzeResult = () => (
+    <div className="mt-4 p-4 bg-gray-700/50 rounded-lg text-white">
+      <h4 className="font-semibold mb-2">분석 결과</h4>
+      {/* 식물 여부 및 확률 */}
+      <div className="mb-2">
+        <strong>식물 여부:</strong>{" "}
+        {typeof speciesResult?.is_plant !== "undefined"
+          ? speciesResult.is_plant
+            ? "식물 맞음"
+            : "식물 아님"
+          : "-"}
+        (확률:{" "}
+        {typeof speciesResult?.is_plant_probability === "number"
+          ? Math.round(speciesResult.is_plant_probability * 100)
+          : 0}
+        %)
+      </div>
+      {/* 종 예측 */}
+      <div className="mb-2">
+        <strong>종(예측):</strong>
+        <ul className="list-disc ml-6">
+          {Array.isArray(speciesResult?.suggestions) &&
+            speciesResult.suggestions.map(
+              (s: IdentifyResult["suggestions"][number], idx: number) => (
+                <li key={idx}>
+                  {s.plant_details?.scientific_name || s.plant_name || "-"}{" "}
+                  (신뢰도: {s.probability ? Math.round(s.probability * 100) : 0}
+                  %)
+                </li>
+              )
+            )}
+        </ul>
+      </div>
+      {/* 건강상태(identify API에서 제공 시) */}
+      {speciesResult?.health_assessment && (
+        <div className="mb-2">
+          <strong>건강상태:</strong>{" "}
+          {speciesResult.health_assessment?.is_healthy ? "건강함" : "질병 의심"}
+          {speciesResult.health_assessment?.diseases?.length > 0 && (
+            <ul className="list-disc ml-6 mt-1">
+              {speciesResult.health_assessment?.diseases.map(
+                (d: { name: string; probability: number }, idx: number) => (
+                  <li key={idx}>
+                    {d.name} (확률: {Math.round(d.probability * 100)}%)
+                  </li>
+                )
+              )}
+            </ul>
+          )}
+        </div>
+      )}
+      {/* 건강 진단(상세) - health assessment API */}
+      {healthResult && healthResult.result && (
+        <div className="mb-2">
+          <strong>건강 진단(상세):</strong>
+          <div className="mt-2">
+            <div>
+              <strong>식물 여부:</strong>{" "}
+              {healthResult &&
+              healthResult.result &&
+              healthResult.result.is_plant &&
+              typeof healthResult.result.is_plant.binary !== "undefined"
+                ? healthResult.result.is_plant.binary
+                  ? "식물 맞음"
+                  : "식물 아님"
+                : "-"}
+              (확률:{" "}
+              {healthResult &&
+              healthResult.result &&
+              healthResult.result.is_plant &&
+              typeof healthResult.result.is_plant.probability === "number"
+                ? Math.round(healthResult.result.is_plant.probability * 100)
+                : 0}
+              %)
+            </div>
+            <div>
+              <strong>건강 여부:</strong>{" "}
+              {healthResult &&
+              healthResult.result &&
+              healthResult.result.is_healthy &&
+              typeof healthResult.result.is_healthy.binary !== "undefined"
+                ? healthResult.result.is_healthy.binary
+                  ? "건강함"
+                  : "건강하지 않음"
+                : "-"}
+              (확률:{" "}
+              {healthResult &&
+              healthResult.result &&
+              healthResult.result.is_healthy &&
+              typeof healthResult.result.is_healthy.probability === "number"
+                ? Math.round(healthResult.result.is_healthy.probability * 100)
+                : 0}
+              %)
+            </div>
+            {healthResult &&
+            healthResult.result &&
+            healthResult.result.disease &&
+            Array.isArray(healthResult.result.disease.suggestions) &&
+            healthResult.result.disease.suggestions.length > 0 ? (
+              <div className="mt-2">
+                <strong>질병 의심:</strong>
+                <ul className="list-disc ml-6 mt-1">
+                  {healthResult.result.disease.suggestions.map((d, idx) => (
+                    <li key={idx}>
+                      {d.name} (확률: {Math.round(d.probability * 100)}%)
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
+          </div>
+        </div>
+      )}
+      {analyzeError && <p className="text-red-500 mt-2">{analyzeError}</p>}
+    </div>
+  );
+
   return (
     <ScrollArea className="h-screen">
       <div className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800">
@@ -216,6 +400,59 @@ export default function SpecialGrowingPage() {
               <ResizablePanel defaultSize={30} minSize={20}>
                 <div className="h-full p-6">
                   <div className="h-full rounded-lg border border-gray-700 bg-gray-800/50 flex flex-col">
+                    {/* 실시간 영상 위쪽에 버튼 추가 */}
+                    <div className="flex justify-end items-center p-2">
+                      <Dialog
+                        open={analyzeDialogOpen}
+                        onOpenChange={setAnalyzeDialogOpen}
+                      >
+                        <DialogTrigger asChild>
+                          <Button
+                            className="bg-purple-600 hover:bg-purple-700 text-white"
+                            onClick={async () => {
+                              setAnalyzeDialogOpen(true);
+                              setAnalyzeLoading(true);
+                              setAnalyzeError(null);
+                              setSpeciesResult(null);
+                              setHealthResult(null);
+                              try {
+                                const imageUrl = await getPlantImageUrl(
+                                  sampleImagePath
+                                );
+                                const { speciesResult, healthResult } =
+                                  await analyzePlantAll(imageUrl);
+                                setSpeciesResult(speciesResult);
+                                setHealthResult(healthResult);
+                              } catch (err) {
+                                let message = "분석 중 오류가 발생했습니다.";
+                                if (err instanceof Error) message = err.message;
+                                setAnalyzeError(message);
+                              } finally {
+                                setAnalyzeLoading(false);
+                              }
+                            }}
+                            disabled={analyzeLoading}
+                          >
+                            {analyzeLoading
+                              ? "분석 중..."
+                              : "식물 건강상태 분석하기"}
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="bg-gray-800 text-white border-gray-700">
+                          <DialogHeader>
+                            <DialogTitle>식물 건강상태 분석 결과</DialogTitle>
+                          </DialogHeader>
+                          <DialogDescription>
+                            분석 결과를 아래에서 확인하세요.
+                          </DialogDescription>
+                          {analyzeLoading ? (
+                            <div className="text-center py-8">분석 중...</div>
+                          ) : (
+                            renderAnalyzeResult()
+                          )}
+                        </DialogContent>
+                      </Dialog>
+                    </div>
                     <div className="p-4 border-b border-gray-700">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center">

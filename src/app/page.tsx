@@ -24,7 +24,7 @@ export default function Home() {
             showBorder={false}
             className="custom-class"
           >
-            스마트 식물재배 관찰일지, git branch test
+            스마트 식물재배 관찰일지{" "}
           </GradientText>
         </h1>
         <div className="text-xl mt-4 flex items-center justify-center gap-2">

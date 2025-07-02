@@ -37,3 +37,99 @@ export const STUDENT_NAMES: Record<string, string> = {
 export const SPECIAL_STUDENT_NAMES: Record<string, string> = {
   "special@test.co.kr": "정하윤",
 };
+
+// 기존 타입은 주석 처리
+// export interface PlantIdHealthAssessment {
+//   is_healthy: boolean;
+//   diseases: Array<{
+//     name: string;
+//     probability: number;
+//     details?: string;
+//   }>;
+// }
+// export interface PlantIdSpecies {
+//   scientific_name: string;
+//   common_names: string[];
+//   probability: number;
+// }
+// export interface PlantIdResult {
+//   species: PlantIdSpecies[];
+//   health_assessment?: PlantIdHealthAssessment;
+//   // 필요에 따라 추가 필드 정의
+// }
+
+// plant.id API 예시 응답 구조에 맞는 타입 정의
+export interface PlantIdApiIsPlant {
+  probability: number;
+  threshold: number;
+  binary: boolean;
+}
+
+export interface PlantIdApiIsHealthy {
+  binary: boolean;
+  threshold: number;
+  probability: number;
+}
+
+export interface PlantIdApiDiseaseSuggestionImage {
+  id: string;
+  url: string;
+  license_name: string;
+  license_url: string;
+  citation: string;
+  similarity: number;
+  url_small: string;
+}
+
+export interface PlantIdApiDiseaseSuggestionDetails {
+  language: string;
+  entity_id: string;
+}
+
+export interface PlantIdApiDiseaseSuggestion {
+  id: string;
+  name: string;
+  probability: number;
+  similar_images: PlantIdApiDiseaseSuggestionImage[];
+  details: PlantIdApiDiseaseSuggestionDetails;
+}
+
+export interface PlantIdApiDiseaseQuestionOption {
+  suggestion_index: number;
+  entity_id: string;
+  name: string;
+  translation: string;
+}
+
+export interface PlantIdApiDiseaseQuestion {
+  text: string;
+  translation: string;
+  options: {
+    yes: PlantIdApiDiseaseQuestionOption;
+    no: PlantIdApiDiseaseQuestionOption;
+  };
+}
+
+export interface PlantIdApiDisease {
+  suggestions: PlantIdApiDiseaseSuggestion[];
+  question: PlantIdApiDiseaseQuestion;
+}
+
+export interface PlantIdApiResult {
+  is_plant: PlantIdApiIsPlant;
+  is_healthy: PlantIdApiIsHealthy;
+  disease: PlantIdApiDisease;
+}
+
+export interface PlantIdApiResponse {
+  access_token: string;
+  model_version: string;
+  custom_id: string | null;
+  input: Record<string, unknown>;
+  result: PlantIdApiResult;
+  status: string;
+  sla_compliant_client: boolean;
+  sla_compliant_system: boolean;
+  created: number;
+  completed: number;
+}
