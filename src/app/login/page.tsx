@@ -6,6 +6,13 @@ import Link from "next/link";
 import { auth } from "@/lib/firebase";
 import { signInWithEmailAndPassword, AuthError } from "firebase/auth";
 import { useRouter } from "next/navigation";
+import { Volume2 } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -105,6 +112,41 @@ export default function LoginPage() {
           특수교육대상자 로그인
         </Button>
       </div>
+      {/* 읽어주기 버튼 - 오른쪽 하단 고정, 원형, Tooltip */}
+      <TooltipProvider>
+        <div className="fixed bottom-6 right-24 z-50">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                className="rounded-full w-14 h-14 bg-green-500 hover:bg-white hover:text-green-500 transition-colors duration-200 shadow-lg flex items-center justify-center"
+                size="lg"
+                onClick={async () => {
+                  const text =
+                    "로그인 페이지입니다. 이메일과 비밀번호를 입력하고 로그인 버튼을 눌러주세요. 특수교육대상자라면 아래 녹색 버튼을 눌러주세요. 이전페이지로 돌아가려면 왼쪽 상단의 버튼을 눌러주세요.";
+                  const res = await fetch("/api/tts", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ text }),
+                  });
+                  if (res.ok) {
+                    const blob = await res.blob();
+                    const url = URL.createObjectURL(blob);
+                    const audio = new Audio(url);
+                    audio.play();
+                  } else {
+                    alert("음성 생성에 실패했습니다.");
+                  }
+                }}
+              >
+                <Volume2 className="w-6 h-6" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent className="bg-gray-800 text-white border-gray-700">
+              <p>로그인 안내 음성 듣기</p>
+            </TooltipContent>
+          </Tooltip>
+        </div>
+      </TooltipProvider>
     </main>
   );
 }
