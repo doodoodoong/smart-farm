@@ -173,6 +173,9 @@ export default function GrowingPage() {
     null
   );
   const [analyzeDialogOpen, setAnalyzeDialogOpen] = useState(false);
+  const [translatedDiseaseNames, setTranslatedDiseaseNames] = useState<{
+    [key: string]: string;
+  }>({});
 
   // 임시 샘플 이미지 경로 (실제 구현 시 동적으로 변경)
   const sampleImagePath = "plantcam/daily.jpg";
@@ -529,37 +532,39 @@ export default function GrowingPage() {
     }));
   };
 
-  // 분석 결과 렌더링 함수 분리
+  // 질병명 추출
+  const diseaseNames = [
+    ...(speciesResult?.health_assessment?.diseases?.map((d) => d.name) || []),
+    ...(healthResult?.result?.disease?.suggestions?.map((d) => d.name) || []),
+  ];
+
+  // 질병명 번역 useEffect
+  useEffect(() => {
+    const untranslated = diseaseNames.filter(
+      (name) => !translatedDiseaseNames[name]
+    );
+    if (untranslated.length === 0) return;
+    untranslated.forEach(async (name) => {
+      try {
+        const res = await fetch("/api/translate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text: name, source: "en", target: "ko" }),
+        });
+        const data = await res.json();
+        if (data.translatedText) {
+          setTranslatedDiseaseNames((prev) => ({
+            ...prev,
+            [name]: data.translatedText,
+          }));
+        }
+      } catch {}
+    });
+  }, [diseaseNames.join(",")]);
+
   const renderAnalyzeResult = () => (
     <div className="mt-4 p-4 bg-gray-700/50 rounded-lg text-white">
       <h4 className="font-semibold mb-2">분석 결과</h4>
-      {/* 식물 여부 및 확률 */}
-      <div className="mb-2">
-        <strong>식물 여부:</strong>{" "}
-        {typeof speciesResult?.is_plant !== "undefined"
-          ? speciesResult.is_plant
-            ? "식물 맞음"
-            : "식물 아님"
-          : "-"}
-        (확률:{" "}
-        {typeof speciesResult?.is_plant_probability === "number"
-          ? Math.round(speciesResult.is_plant_probability * 100)
-          : 0}
-        %)
-      </div>
-      {/* 종 예측 */}
-      <div className="mb-2">
-        <strong>종(예측):</strong>
-        <ul className="list-disc ml-6">
-          {Array.isArray(speciesResult?.suggestions) &&
-            speciesResult.suggestions.map((s, idx) => (
-              <li key={idx}>
-                {s.plant_details?.scientific_name || s.plant_name || "-"}{" "}
-                (신뢰도: {s.probability ? Math.round(s.probability * 100) : 0}%)
-              </li>
-            ))}
-        </ul>
-      </div>
       {/* 건강상태(identify API에서 제공 시) */}
       {speciesResult?.health_assessment && (
         <div className="mb-2">
@@ -569,7 +574,8 @@ export default function GrowingPage() {
             <ul className="list-disc ml-6 mt-1">
               {speciesResult.health_assessment?.diseases.map((d, idx) => (
                 <li key={idx}>
-                  {d.name} (확률: {Math.round(d.probability * 100)}%)
+                  {translatedDiseaseNames[d.name] || d.name} (확률:{" "}
+                  {Math.round(d.probability * 100)}%)
                 </li>
               ))}
             </ul>
@@ -629,7 +635,8 @@ export default function GrowingPage() {
                 <ul className="list-disc ml-6 mt-1">
                   {healthResult.result.disease.suggestions.map((d, idx) => (
                     <li key={idx}>
-                      {d.name} (확률: {Math.round(d.probability * 100)}%)
+                      {translatedDiseaseNames[d.name] || d.name} (확률:{" "}
+                      {Math.round(d.probability * 100)}%)
                     </li>
                   ))}
                 </ul>
