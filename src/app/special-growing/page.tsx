@@ -125,6 +125,9 @@ export default function SpecialGrowingPage() {
   );
   const [analyzeDialogOpen, setAnalyzeDialogOpen] = useState(false);
   const sampleImagePath = "plantcam/daily.jpg";
+  const [translatedDiseaseNames, setTranslatedDiseaseNames] = useState<{
+    [key: string]: string;
+  }>({});
 
   const handleFirebaseError = (error: unknown, context: string) => {
     let errorMessage = `${context} 저장 중 오류가 발생했습니다.`;
@@ -266,6 +269,36 @@ export default function SpecialGrowingPage() {
     }));
   };
 
+  // 질병명 추출
+  const diseaseNames = [
+    ...(speciesResult?.health_assessment?.diseases?.map((d) => d.name) || []),
+    ...(healthResult?.result?.disease?.suggestions?.map((d) => d.name) || []),
+  ];
+
+  // 질병명 번역 useEffect
+  useEffect(() => {
+    const untranslated = diseaseNames.filter(
+      (name) => !translatedDiseaseNames[name]
+    );
+    if (untranslated.length === 0) return;
+    untranslated.forEach(async (name) => {
+      try {
+        const res = await fetch("/api/translate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text: name, source: "en", target: "ko" }),
+        });
+        const data = await res.json();
+        if (data.translatedText) {
+          setTranslatedDiseaseNames((prev) => ({
+            ...prev,
+            [name]: data.translatedText,
+          }));
+        }
+      } catch {}
+    });
+  }, [diseaseNames.join(",")]);
+
   // 분석 결과 렌더링 함수
   const renderAnalyzeResult = () => (
     <div className="mt-4 p-4 bg-gray-700/50 rounded-lg text-white">
@@ -284,22 +317,6 @@ export default function SpecialGrowingPage() {
           : 0}
         %)
       </div>
-      {/* 종 예측 */}
-      <div className="mb-2">
-        <strong>종(예측):</strong>
-        <ul className="list-disc ml-6">
-          {Array.isArray(speciesResult?.suggestions) &&
-            speciesResult.suggestions.map(
-              (s: IdentifyResult["suggestions"][number], idx: number) => (
-                <li key={idx}>
-                  {s.plant_details?.scientific_name || s.plant_name || "-"}{" "}
-                  (신뢰도: {s.probability ? Math.round(s.probability * 100) : 0}
-                  %)
-                </li>
-              )
-            )}
-        </ul>
-      </div>
       {/* 건강상태(identify API에서 제공 시) */}
       {speciesResult?.health_assessment && (
         <div className="mb-2">
@@ -310,7 +327,8 @@ export default function SpecialGrowingPage() {
               {speciesResult.health_assessment?.diseases.map(
                 (d: { name: string; probability: number }, idx: number) => (
                   <li key={idx}>
-                    {d.name} (확률: {Math.round(d.probability * 100)}%)
+                    {translatedDiseaseNames[d.name] || d.name} (확률:{" "}
+                    {Math.round(d.probability * 100)}%)
                   </li>
                 )
               )}
@@ -323,25 +341,6 @@ export default function SpecialGrowingPage() {
         <div className="mb-2">
           <strong>건강 진단(상세):</strong>
           <div className="mt-2">
-            <div>
-              <strong>식물 여부:</strong>{" "}
-              {healthResult &&
-              healthResult.result &&
-              healthResult.result.is_plant &&
-              typeof healthResult.result.is_plant.binary !== "undefined"
-                ? healthResult.result.is_plant.binary
-                  ? "식물 맞음"
-                  : "식물 아님"
-                : "-"}
-              (확률:{" "}
-              {healthResult &&
-              healthResult.result &&
-              healthResult.result.is_plant &&
-              typeof healthResult.result.is_plant.probability === "number"
-                ? Math.round(healthResult.result.is_plant.probability * 100)
-                : 0}
-              %)
-            </div>
             <div>
               <strong>건강 여부:</strong>{" "}
               {healthResult &&
@@ -371,7 +370,8 @@ export default function SpecialGrowingPage() {
                 <ul className="list-disc ml-6 mt-1">
                   {healthResult.result.disease.suggestions.map((d, idx) => (
                     <li key={idx}>
-                      {d.name} (확률: {Math.round(d.probability * 100)}%)
+                      {translatedDiseaseNames[d.name] || d.name} (확률:{" "}
+                      {Math.round(d.probability * 100)}%)
                     </li>
                   ))}
                 </ul>

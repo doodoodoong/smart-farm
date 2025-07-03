@@ -11,7 +11,8 @@ export async function analyzePlantHealth(
   const apiKey = process.env.NEXT_PUBLIC_PLANT_ID_API_KEY;
   if (!apiKey) throw new Error("plant.id API Key가 설정되어 있지 않습니다.");
 
-  const endpoint = "https://api.plant.id/v2/health_assessment";
+  const endpoint =
+    "https://api.plant.id/v3/health_assessment?language=ko&details=local_name,description";
 
   const body = {
     images: [imageUrl],
@@ -51,11 +52,14 @@ export async function analyzePlantAll(imageUrl: string): Promise<{
   if (!apiKey) throw new Error("plant.id API Key가 설정되어 있지 않습니다.");
 
   // 종 예측(identify)
-  const identifyEndpoint = "https://api.plant.id/v2/identify";
+  const identifyEndpoint = "https://api.plant.id/v2/identify?language=ko";
   const identifyBody = {
     images: [imageUrl],
     details: [
       "common_names",
+      "description",
+      "description_gpt",
+      "description_all",
       "url",
       "name_authority",
       "wiki_description",
@@ -80,7 +84,8 @@ export async function analyzePlantAll(imageUrl: string): Promise<{
   const speciesResult: IdentifyResult = await identifyRes.json();
 
   // 건강진단(health_assessment)
-  const healthEndpoint = "https://api.plant.id/v3/health_assessment";
+  const healthEndpoint =
+    "https://api.plant.id/v3/health_assessment?language=ko";
   const healthBody = {
     images: [imageUrl],
     similar_images: true,
@@ -131,6 +136,11 @@ interface IdentifyResult {
         genus: string;
         species: string;
       };
+      common_names?: string[];
+      description?: string;
+      description_gpt?: string;
+      description_all?: string;
+      url?: string;
     };
   }>;
   modifiers: string[];
