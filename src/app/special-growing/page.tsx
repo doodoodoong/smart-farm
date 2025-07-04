@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { database } from "@/lib/firebase";
 import { ref, set, onValue } from "firebase/database";
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { toast } from "sonner";
 import { useAuth } from "@/components/auth/AuthContext";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -94,7 +94,7 @@ interface DiaryEntry {
   name: string;
 }
 
-export default function SpecialGrowingPage() {
+function SpecialGrowingPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user } = useAuth();
@@ -965,5 +965,13 @@ export default function SpecialGrowingPage() {
         </div>
       </div>
     </ScrollArea>
+  );
+}
+
+export default function SpecialGrowingPage() {
+  return (
+    <Suspense>
+      <SpecialGrowingPageContent />
+    </Suspense>
   );
 }
