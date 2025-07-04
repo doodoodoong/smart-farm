@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, Video, Save, Volume2 } from "lucide-react";
 import {
   ResizableHandle,
@@ -96,6 +96,7 @@ interface DiaryEntry {
 
 export default function SpecialGrowingPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user } = useAuth();
   const [diaryEntry, setDiaryEntry] = useState<
     Omit<DiaryEntry, "diaryId" | "createdAt" | "lastModified">
@@ -128,6 +129,15 @@ export default function SpecialGrowingPage() {
   const [translatedDiseaseNames, setTranslatedDiseaseNames] = useState<{
     [key: string]: string;
   }>({});
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const fromSplash = searchParams.get("fromSplash");
+      if (fromSplash !== "1") {
+        router.replace("/special-growing/splash");
+      }
+    }
+  }, [searchParams, router]);
 
   const handleFirebaseError = (error: unknown, context: string) => {
     let errorMessage = `${context} 저장 중 오류가 발생했습니다.`;
