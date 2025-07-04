@@ -13,28 +13,6 @@ interface CircularTextProps {
   className?: string;
 }
 
-const getRotationTransition = (
-  duration: number,
-  from: number,
-  loop: boolean = true
-) => ({
-  from: from,
-  to: from + 360,
-  ease: "linear",
-  duration: duration,
-  type: "tween",
-  repeat: loop ? Infinity : 0,
-});
-
-const getTransition = (duration: number, from: number) => ({
-  rotate: getRotationTransition(duration, from),
-  scale: {
-    type: "spring",
-    damping: 20,
-    stiffness: 300,
-  },
-});
-
 const CircularText: React.FC<CircularTextProps> = ({
   text,
   spinDuration = 20,
@@ -49,7 +27,19 @@ const CircularText: React.FC<CircularTextProps> = ({
     controls.start({
       rotate: currentRotation + 360,
       scale: 1,
-      transition: getTransition(spinDuration, currentRotation),
+      transition: {
+        rotate: {
+          ease: "linear",
+          duration: spinDuration,
+          repeat: Infinity,
+          type: "tween",
+        },
+        scale: {
+          type: "spring",
+          damping: 20,
+          stiffness: 300,
+        },
+      },
     });
   }, [spinDuration, controls, onHover, text]);
 
@@ -60,14 +50,38 @@ const CircularText: React.FC<CircularTextProps> = ({
         controls.start({
           rotate: currentRotation + 360,
           scale: 1,
-          transition: getTransition(spinDuration * 2, currentRotation),
+          transition: {
+            rotate: {
+              ease: "linear",
+              duration: spinDuration * 2,
+              repeat: Infinity,
+              type: "tween",
+            },
+            scale: {
+              type: "spring",
+              damping: 20,
+              stiffness: 300,
+            },
+          },
         });
         break;
       case "speedUp":
         controls.start({
           rotate: currentRotation + 360,
           scale: 1,
-          transition: getTransition(spinDuration / 4, currentRotation),
+          transition: {
+            rotate: {
+              ease: "linear",
+              duration: spinDuration / 4,
+              repeat: Infinity,
+              type: "tween",
+            },
+            scale: {
+              type: "spring",
+              damping: 20,
+              stiffness: 300,
+            },
+          },
         });
         break;
       case "pause":
@@ -75,8 +89,16 @@ const CircularText: React.FC<CircularTextProps> = ({
           rotate: currentRotation,
           scale: 1,
           transition: {
-            rotate: { type: "spring", damping: 20, stiffness: 300 },
-            scale: { type: "spring", damping: 20, stiffness: 300 },
+            rotate: {
+              type: "spring",
+              damping: 20,
+              stiffness: 300,
+            },
+            scale: {
+              type: "spring",
+              damping: 20,
+              stiffness: 300,
+            },
           },
         });
         break;
@@ -84,7 +106,19 @@ const CircularText: React.FC<CircularTextProps> = ({
         controls.start({
           rotate: currentRotation + 360,
           scale: 0.8,
-          transition: getTransition(spinDuration / 20, currentRotation),
+          transition: {
+            rotate: {
+              ease: "linear",
+              duration: spinDuration / 20,
+              repeat: Infinity,
+              type: "tween",
+            },
+            scale: {
+              type: "spring",
+              damping: 20,
+              stiffness: 300,
+            },
+          },
         });
         break;
       default:
@@ -96,7 +130,19 @@ const CircularText: React.FC<CircularTextProps> = ({
     controls.start({
       rotate: currentRotation + 360,
       scale: 1,
-      transition: getTransition(spinDuration, currentRotation),
+      transition: {
+        rotate: {
+          ease: "linear",
+          duration: spinDuration,
+          repeat: Infinity,
+          type: "tween",
+        },
+        scale: {
+          type: "spring",
+          damping: 20,
+          stiffness: 300,
+        },
+      },
     });
   };
 
