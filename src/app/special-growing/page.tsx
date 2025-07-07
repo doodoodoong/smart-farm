@@ -92,6 +92,8 @@ interface DiaryEntry {
   lastModified: string;
   email: string;
   name: string;
+  plantHeightColor?: "red" | "yellow" | "blue" | "orange";
+  plantHeightCount?: number;
 }
 
 function SpecialGrowingPageContent() {
@@ -99,7 +101,10 @@ function SpecialGrowingPageContent() {
   const searchParams = useSearchParams();
   const { user } = useAuth();
   const [diaryEntry, setDiaryEntry] = useState<
-    Omit<DiaryEntry, "diaryId" | "createdAt" | "lastModified">
+    Omit<DiaryEntry, "diaryId" | "createdAt" | "lastModified"> & {
+      plantHeightColor?: "red" | "yellow" | "blue" | "orange";
+      plantHeightCount?: number;
+    }
   >({
     plantId: "",
     leafCount: "",
@@ -108,6 +113,8 @@ function SpecialGrowingPageContent() {
     feeling: "neutral",
     email: "",
     name: "",
+    plantHeightColor: undefined,
+    plantHeightCount: undefined,
   });
   const [diaryRecords, setDiaryRecords] = useState<DiaryEntry[]>([]);
   const [isChatOpen, setIsChatOpen] = useState(false);
@@ -232,7 +239,10 @@ function SpecialGrowingPageContent() {
           diaryEntry.plantId || "default"
         }/${diaryId}`
       );
-      const newDiaryEntry: DiaryEntry = {
+      const newDiaryEntry: DiaryEntry & {
+        plantHeightColor?: string;
+        plantHeightCount?: number;
+      } = {
         diaryId,
         plantId: diaryEntry.plantId || "",
         leafCount: diaryEntry.leafCount,
@@ -243,6 +253,8 @@ function SpecialGrowingPageContent() {
         lastModified: new Date().toISOString(),
         email: user.email ?? "",
         name: user.displayName ?? user.email ?? "",
+        plantHeightColor: diaryEntry.plantHeightColor,
+        plantHeightCount: diaryEntry.plantHeightCount,
       };
       await set(diaryRef, newDiaryEntry);
       toast.success("재배일지 저장 완료", {
@@ -254,6 +266,8 @@ function SpecialGrowingPageContent() {
         grewTaller: "unknown",
         newLeaf: "no",
         feeling: "neutral",
+        plantHeightColor: undefined,
+        plantHeightCount: undefined,
       }));
     } catch (error) {
       console.error("Firebase 저장 오류:", error);
@@ -778,6 +792,132 @@ function SpecialGrowingPageContent() {
                         </div>
                         <div className="space-y-2">
                           <Label className="text-white flex items-center gap-2">
+                            식물의 키는 얼마인가요?
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    className="rounded-full w-8 h-8 bg-green-500 hover:bg-white hover:text-green-500 transition-colors duration-200 shadow flex items-center justify-center ml-1"
+                                    size="icon"
+                                    onClick={async () => {
+                                      const text =
+                                        "식물의 키는 얼마인가요? 빨간색, 노란색, 파란색, 주황색 중 하나를 선택하고, 1에서 5까지 칸수를 입력하세요.";
+                                      const res = await fetch("/api/tts", {
+                                        method: "POST",
+                                        headers: {
+                                          "Content-Type": "application/json",
+                                        },
+                                        body: JSON.stringify({ text }),
+                                      });
+                                      if (res.ok) {
+                                        const blob = await res.blob();
+                                        const url = URL.createObjectURL(blob);
+                                        const audio = new Audio(url);
+                                        audio.play();
+                                      } else {
+                                        alert("음성 생성에 실패했습니다.");
+                                      }
+                                    }}
+                                  >
+                                    <Volume2 className="w-4 h-4" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent className="bg-gray-800 text-white border-gray-700">
+                                  <p>문항 읽어주기</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          </Label>
+                          <div className="flex items-center gap-4 mt-1">
+                            {/* 색상 선택 */}
+                            {[
+                              {
+                                color: "red",
+                                label: "빨간색",
+                                style: "bg-red-500",
+                              },
+                              {
+                                color: "yellow",
+                                label: "노란색",
+                                style: "bg-yellow-400",
+                              },
+                              {
+                                color: "blue",
+                                label: "파란색",
+                                style: "bg-blue-500",
+                              },
+                              {
+                                color: "orange",
+                                label: "주황색",
+                                style: "bg-orange-400",
+                              },
+                            ].map((opt) => (
+                              <button
+                                key={opt.color}
+                                type="button"
+                                className={`w-8 h-8 rounded-full border-2 flex items-center justify-center mr-2 focus:outline-none ${
+                                  opt.style
+                                } ${
+                                  diaryEntry.plantHeightColor === opt.color
+                                    ? "border-white scale-110"
+                                    : "border-transparent opacity-70"
+                                }`}
+                                aria-label={opt.label}
+                                onClick={() =>
+                                  setDiaryEntry((prev) => ({
+                                    ...prev,
+                                    plantHeightColor: opt.color as
+                                      | "red"
+                                      | "yellow"
+                                      | "blue"
+                                      | "orange",
+                                  }))
+                                }
+                              >
+                                {diaryEntry.plantHeightColor === opt.color
+                                  ? "✓"
+                                  : ""}
+                              </button>
+                            ))}
+                            <span className="text-white text-sm ml-2">
+                              색상
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2 mt-2">
+                            <Input
+                              id="plantHeightCount"
+                              name="plantHeightCount"
+                              type="number"
+                              min={1}
+                              max={5}
+                              value={
+                                diaryEntry.plantHeightCount &&
+                                diaryEntry.plantHeightCount > 0
+                                  ? diaryEntry.plantHeightCount
+                                  : ""
+                              }
+                              onChange={(e) => {
+                                const val = parseInt(e.target.value, 10);
+                                if (isNaN(val) || val < 1 || val > 5) {
+                                  setDiaryEntry((prev) => ({
+                                    ...prev,
+                                    plantHeightCount: 0,
+                                  }));
+                                } else {
+                                  setDiaryEntry((prev) => ({
+                                    ...prev,
+                                    plantHeightCount: val,
+                                  }));
+                                }
+                              }}
+                              className="bg-gray-700 text-white border-gray-600 w-20"
+                              placeholder="1~5"
+                            />
+                            <span className="text-white">칸</span>
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-white flex items-center gap-2">
                             오늘 식물의 키가 전보다 <b>커졌나요?</b>
                             <TooltipProvider>
                               <Tooltip>
@@ -1037,6 +1177,26 @@ function SpecialGrowingPageContent() {
                                                   : record.feeling === "neutral"
                                                   ? "보통"
                                                   : "슬픔"
+                                              }$${
+                                                record.plantHeightColor &&
+                                                record.plantHeightCount
+                                                  ? `, 식물 키: ${
+                                                      {
+                                                        red: "빨간색",
+                                                        yellow: "노란색",
+                                                        blue: "파란색",
+                                                        orange: "주황색",
+                                                      }[
+                                                        record.plantHeightColor as
+                                                          | "red"
+                                                          | "yellow"
+                                                          | "blue"
+                                                          | "orange"
+                                                      ]
+                                                    } ${
+                                                      record.plantHeightCount
+                                                    }칸`
+                                                  : ""
                                               }`;
                                               const res = await fetch(
                                                 "/api/tts",
@@ -1097,6 +1257,27 @@ function SpecialGrowingPageContent() {
                                         ? "😐"
                                         : "😢"}
                                     </p>
+                                    {record.plantHeightColor &&
+                                    record.plantHeightCount ? (
+                                      <p className="col-span-2">
+                                        식물 키:{" "}
+                                        {
+                                          {
+                                            red: "빨간색",
+                                            yellow: "노란색",
+                                            blue: "파란색",
+                                            orange: "주황색",
+                                          }[
+                                            record.plantHeightColor as
+                                              | "red"
+                                              | "yellow"
+                                              | "blue"
+                                              | "orange"
+                                          ]
+                                        }{" "}
+                                        {record.plantHeightCount}칸
+                                      </p>
+                                    ) : null}
                                   </div>
                                 </div>
                               ))
