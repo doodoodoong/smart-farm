@@ -394,6 +394,81 @@ function SpecialGrowingPageContent() {
     </div>
   );
 
+  // 분석 결과 음성 안내용 텍스트 생성 함수
+  function getAnalyzeResultSpeechText() {
+    if (analyzeError) {
+      return `분석 중 오류가 발생했습니다. ${analyzeError}`;
+    }
+    let result = "";
+    // 식물 여부
+    if (typeof speciesResult?.is_plant !== "undefined") {
+      result += `식물 여부: ${
+        speciesResult.is_plant ? "식물 맞음" : "식물 아님"
+      }`;
+      if (typeof speciesResult.is_plant_probability === "number") {
+        result += `, 확률: ${Math.round(
+          speciesResult.is_plant_probability * 100
+        )}%`;
+      }
+      result += ". ";
+    }
+    // 건강상태(identify API)
+    if (speciesResult?.health_assessment) {
+      result += `건강상태: ${
+        speciesResult.health_assessment.is_healthy ? "건강함" : "질병 의심"
+      }`;
+      if (speciesResult.health_assessment.diseases?.length > 0) {
+        result += ", 질병 의심: ";
+        result += speciesResult.health_assessment.diseases
+          .map(
+            (d) =>
+              `${translatedDiseaseNames[d.name] || d.name} (확률: ${Math.round(
+                d.probability * 100
+              )}%)`
+          )
+          .join(", ");
+      }
+      result += ". ";
+    }
+    // 건강 진단(상세)
+    if (healthResult && healthResult.result) {
+      if (
+        healthResult.result.is_healthy &&
+        typeof healthResult.result.is_healthy.binary !== "undefined"
+      ) {
+        result += `건강 여부: ${
+          healthResult.result.is_healthy.binary ? "건강함" : "건강하지 않음"
+        }`;
+        if (typeof healthResult.result.is_healthy.probability === "number") {
+          result += `, 확률: ${Math.round(
+            healthResult.result.is_healthy.probability * 100
+          )}%`;
+        }
+        result += ". ";
+      }
+      if (
+        healthResult.result.disease &&
+        Array.isArray(healthResult.result.disease.suggestions) &&
+        healthResult.result.disease.suggestions.length > 0
+      ) {
+        result += "질병 의심: ";
+        result += healthResult.result.disease.suggestions
+          .map(
+            (d) =>
+              `${translatedDiseaseNames[d.name] || d.name} (확률: ${Math.round(
+                d.probability * 100
+              )}%)`
+          )
+          .join(", ");
+        result += ". ";
+      }
+    }
+    if (!result) {
+      result = "분석 결과가 없습니다.";
+    }
+    return result;
+  }
+
   return (
     <ScrollArea className="h-screen">
       <div className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800">
@@ -457,38 +532,76 @@ function SpecialGrowingPageContent() {
                         open={analyzeDialogOpen}
                         onOpenChange={setAnalyzeDialogOpen}
                       >
-                        <DialogTrigger asChild>
-                          <Button
-                            className="bg-purple-600 hover:bg-purple-700 text-white"
-                            onClick={async () => {
-                              setAnalyzeDialogOpen(true);
-                              setAnalyzeLoading(true);
-                              setAnalyzeError(null);
-                              setSpeciesResult(null);
-                              setHealthResult(null);
-                              try {
-                                const imageUrl = await getPlantImageUrl(
-                                  sampleImagePath
-                                );
-                                const { speciesResult, healthResult } =
-                                  await analyzePlantAll(imageUrl);
-                                setSpeciesResult(speciesResult);
-                                setHealthResult(healthResult);
-                              } catch (err) {
-                                let message = "분석 중 오류가 발생했습니다.";
-                                if (err instanceof Error) message = err.message;
-                                setAnalyzeError(message);
-                              } finally {
-                                setAnalyzeLoading(false);
-                              }
-                            }}
-                            disabled={analyzeLoading}
-                          >
-                            {analyzeLoading
-                              ? "분석 중..."
-                              : "식물 건강상태 분석하기"}
-                          </Button>
-                        </DialogTrigger>
+                        <div className="flex items-center gap-2">
+                          <DialogTrigger asChild>
+                            <Button
+                              className="bg-purple-600 hover:bg-purple-700 text-white"
+                              onClick={async () => {
+                                setAnalyzeDialogOpen(true);
+                                setAnalyzeLoading(true);
+                                setAnalyzeError(null);
+                                setSpeciesResult(null);
+                                setHealthResult(null);
+                                try {
+                                  const imageUrl = await getPlantImageUrl(
+                                    sampleImagePath
+                                  );
+                                  const { speciesResult, healthResult } =
+                                    await analyzePlantAll(imageUrl);
+                                  setSpeciesResult(speciesResult);
+                                  setHealthResult(healthResult);
+                                } catch (err) {
+                                  let message = "분석 중 오류가 발생했습니다.";
+                                  if (err instanceof Error)
+                                    message = err.message;
+                                  setAnalyzeError(message);
+                                } finally {
+                                  setAnalyzeLoading(false);
+                                }
+                              }}
+                              disabled={analyzeLoading}
+                            >
+                              {analyzeLoading
+                                ? "분석 중..."
+                                : "식물 건강상태 분석하기"}
+                            </Button>
+                          </DialogTrigger>
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  className="rounded-full w-8 h-8 bg-green-500 hover:bg-white hover:text-green-500 transition-colors duration-200 shadow flex items-center justify-center"
+                                  size="icon"
+                                  disabled={analyzeLoading}
+                                  onClick={async () => {
+                                    const text =
+                                      "식물 건강상태 분석 안내입니다. 이 버튼을 누르면 식물의 건강상태를 분석할 수 있습니다.";
+                                    const res = await fetch("/api/tts", {
+                                      method: "POST",
+                                      headers: {
+                                        "Content-Type": "application/json",
+                                      },
+                                      body: JSON.stringify({ text }),
+                                    });
+                                    if (res.ok) {
+                                      const blob = await res.blob();
+                                      const url = URL.createObjectURL(blob);
+                                      const audio = new Audio(url);
+                                      audio.play();
+                                    } else {
+                                      alert("음성 생성에 실패했습니다.");
+                                    }
+                                  }}
+                                >
+                                  <Volume2 className="w-4 h-4" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent className="bg-gray-800 text-white border-gray-700">
+                                <p>분석 안내 음성 듣기</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        </div>
                         <DialogContent className="bg-gray-800 text-white border-gray-700">
                           <DialogHeader>
                             <DialogTitle>식물 건강상태 분석 결과</DialogTitle>
@@ -496,6 +609,43 @@ function SpecialGrowingPageContent() {
                           <DialogDescription>
                             분석 결과를 아래에서 확인하세요.
                           </DialogDescription>
+                          {/* 분석 결과 읽어주기 버튼 추가 */}
+                          <div className="flex justify-end mb-2">
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    className="rounded-full w-8 h-8 bg-green-500 hover:bg-white hover:text-green-500 transition-colors duration-200 shadow flex items-center justify-center"
+                                    size="icon"
+                                    disabled={analyzeLoading}
+                                    onClick={async () => {
+                                      const text = getAnalyzeResultSpeechText();
+                                      const res = await fetch("/api/tts", {
+                                        method: "POST",
+                                        headers: {
+                                          "Content-Type": "application/json",
+                                        },
+                                        body: JSON.stringify({ text }),
+                                      });
+                                      if (res.ok) {
+                                        const blob = await res.blob();
+                                        const url = URL.createObjectURL(blob);
+                                        const audio = new Audio(url);
+                                        audio.play();
+                                      } else {
+                                        alert("음성 생성에 실패했습니다.");
+                                      }
+                                    }}
+                                  >
+                                    <Volume2 className="w-4 h-4" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent className="bg-gray-800 text-white border-gray-700">
+                                  <p>분석 결과 읽어주기</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          </div>
                           {analyzeLoading ? (
                             <div className="text-center py-8">분석 중...</div>
                           ) : (
