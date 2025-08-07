@@ -28,14 +28,14 @@ export const USER_ROLES: Record<string, UserRole> = {
 };
 
 export const STUDENT_NAMES: Record<string, string> = {
-  "student1@test.co.kr": "김석경",
-  "student2@test.co.kr": "김하준",
-  "student3@test.co.kr": "이성은",
-  "student4@test.co.kr": "주민서",
+  "student1@test.co.kr": "김○○",
+  "student2@test.co.kr": "김○○",
+  "student3@test.co.kr": "이○○",
+  "student4@test.co.kr": "주○○",
 };
 
 export const SPECIAL_STUDENT_NAMES: Record<string, string> = {
-  "special@test.co.kr": "정하윤",
+  "special@test.co.kr": "정○○",
 };
 
 // 기존 타입은 주석 처리
